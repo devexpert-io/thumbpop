@@ -13,6 +13,7 @@ interface AppLayoutProps {
   onUpdateText: (options: any) => void;
   onImageUpload: (file: File) => void;
   onRemoveBackground: () => void;
+  onDeleteObject: () => void;
   onAIGenerate: (videoContext: string, prompt: string) => void;
   onLuckyGenerate: (videoContext: string) => void;
   onDownload: () => void;
@@ -27,6 +28,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onUpdateText,
   onImageUpload,
   onRemoveBackground,
+  onDeleteObject,
   onAIGenerate,
   onLuckyGenerate,
   onDownload,
@@ -42,6 +44,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           onUpdateText={onUpdateText}
           onImageUpload={onImageUpload}
           onRemoveBackground={onRemoveBackground}
+          onDeleteObject={onDeleteObject}
         />
       </div>
       

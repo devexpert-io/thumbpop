@@ -190,6 +190,15 @@ function App() {
     }
   };
 
+  const handleDeleteObject = () => {
+    if (!selectedObject || !canvasRef.current) return;
+    
+    canvasRef.current.remove(selectedObject);
+    canvasRef.current.discardActiveObject();
+    canvasRef.current.renderAll();
+    setSelectedObject(null);
+  };
+
   const handleDownload = () => {
     if (!canvasRef.current) return;
     downloadCanvas(canvasRef.current);
@@ -258,6 +267,7 @@ function App() {
       onUpdateText={handleUpdateText}
       onImageUpload={handleImageUpload}
       onRemoveBackground={handleRemoveBackground}
+      onDeleteObject={handleDeleteObject}
       onAIGenerate={handleAIGenerate}
       onLuckyGenerate={handleLuckyGenerate}
       onDownload={handleDownload}
