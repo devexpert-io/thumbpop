@@ -9,6 +9,8 @@ import {
   addTextToCanvas,
   addImageToCanvas,
   replaceCanvasWithImage,
+  saveCanvasState,
+  loadCanvasState,
 } from './utils/canvasUtils';
 
 function App() {
@@ -19,6 +21,25 @@ function App() {
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
   const [copiedObject, setCopiedObject] = useState<any>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
+  
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced auto-save function
+  const debouncedSave = () => {
+    if (!canvasRef.current) return;
+    
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    // Set new timeout for auto-save
+    saveTimeoutRef.current = setTimeout(() => {
+      if (canvasRef.current) {
+        saveCanvasState(canvasRef.current);
+      }
+    }, 1000); // Save 1 second after last change
+  };
 
   useEffect(() => {
     const savedKey = localStorage.getItem('gemini_api_key');
@@ -80,6 +101,15 @@ function App() {
       
       const canvas = canvasRef.current;
       
+      // Load saved state when canvas is first ready
+      const hasLoadedState = loadCanvasState(canvas);
+      if (hasLoadedState) {
+        // Update background color state to match loaded state
+        if (canvas.backgroundColor) {
+          setBackgroundColor(canvas.backgroundColor as string);
+        }
+      }
+      
       canvas.on('selection:created', (e: any) => {
         const obj = e.selected?.[0] || null;
         setSelectedObject(obj);
@@ -94,10 +124,24 @@ function App() {
         setSelectedObject(null);
       });
       
+      // Auto-save on canvas changes
+      const saveHandler = () => {
+        debouncedSave();
+      };
+      
+      canvas.on('object:added', saveHandler);
+      canvas.on('object:removed', saveHandler);
+      canvas.on('object:modified', saveHandler);
+      canvas.on('path:created', saveHandler);
+      
       return () => {
         canvas.off('selection:created');
         canvas.off('selection:updated');
         canvas.off('selection:cleared');
+        canvas.off('object:added', saveHandler);
+        canvas.off('object:removed', saveHandler);
+        canvas.off('object:modified', saveHandler);
+        canvas.off('path:created', saveHandler);
       };
     };
     
@@ -112,6 +156,10 @@ function App() {
     return () => {
       clearTimeout(timer);
       cleanup?.();
+      // Cleanup auto-save timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
     };
   }, []);
   
@@ -128,6 +176,7 @@ function App() {
     if (canvasRef.current) {
       canvasRef.current.backgroundColor = color;
       canvasRef.current.renderAll();
+      debouncedSave(); // Auto-save background color changes
     }
   };
 
@@ -273,6 +322,9 @@ function App() {
     
     setSelectedObject(null);
     setShowClearDialog(false);
+    
+    // Save immediately after clearing
+    saveCanvasState(canvasRef.current);
   };
 
   const cancelClearCanvas = () => {

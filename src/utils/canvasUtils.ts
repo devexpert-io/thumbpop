@@ -108,3 +108,40 @@ export const replaceCanvasWithImage = async (
   canvas.add(img);
   canvas.renderAll();
 };
+
+export const saveCanvasState = (canvas: Canvas): void => {
+  try {
+    const canvasData = {
+      objects: canvas.toJSON(),
+      backgroundColor: canvas.backgroundColor,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem('thumbnail_pro_canvas', JSON.stringify(canvasData));
+  } catch (error) {
+    console.warn('Failed to save canvas state to localStorage:', error);
+  }
+};
+
+export const loadCanvasState = (canvas: Canvas): boolean => {
+  try {
+    const savedData = localStorage.getItem('thumbnail_pro_canvas');
+    if (!savedData) return false;
+    
+    const canvasData = JSON.parse(savedData);
+    if (!canvasData.objects) return false;
+    
+    // Load the canvas data
+    canvas.loadFromJSON(canvasData.objects).then(() => {
+      // Restore background color if saved
+      if (canvasData.backgroundColor) {
+        canvas.backgroundColor = canvasData.backgroundColor;
+      }
+      canvas.renderAll();
+    });
+    
+    return true;
+  } catch (error) {
+    console.warn('Failed to load canvas state from localStorage:', error);
+    return false;
+  }
+};
