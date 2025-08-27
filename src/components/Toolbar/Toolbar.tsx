@@ -1,5 +1,5 @@
 import React from 'react';
-import { Copy, Clipboard, Trash2 } from 'lucide-react';
+import { Copy, Clipboard, Trash2, RotateCcw } from 'lucide-react';
 
 interface ToolbarProps {
   hasSelection: boolean;
@@ -7,6 +7,7 @@ interface ToolbarProps {
   onCopy: () => void;
   onPaste: () => void;
   onDelete: () => void;
+  onClear: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -15,6 +16,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onCopy,
   onPaste,
   onDelete,
+  onClear,
 }) => {
   return (
     <div className="bg-white border-b border-gray-200 px-4 py-3">
@@ -60,6 +62,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
           title="Delete (Delete/Backspace)"
         >
           <Trash2 size={18} />
+        </button>
+        
+        <div className="h-5 w-px bg-gray-300 mx-1" />
+        
+        <button
+          onClick={onClear}
+          className="p-2 rounded-md transition-colors text-gray-700 hover:bg-orange-100 hover:text-orange-700"
+          title="Clear Canvas"
+        >
+          <RotateCcw size={18} />
         </button>
       </div>
     </div>

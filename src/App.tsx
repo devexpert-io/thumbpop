@@ -18,6 +18,7 @@ function App() {
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
   const [copiedObject, setCopiedObject] = useState<any>(null);
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
   useEffect(() => {
     const savedKey = localStorage.getItem('gemini_api_key');
@@ -257,6 +258,27 @@ function App() {
     });
   };
 
+  const handleClearCanvas = () => {
+    setShowClearDialog(true);
+  };
+
+  const confirmClearCanvas = () => {
+    if (!canvasRef.current) return;
+    
+    // Clear all objects but preserve background color
+    const bgColor = canvasRef.current.backgroundColor;
+    canvasRef.current.clear();
+    canvasRef.current.backgroundColor = bgColor;
+    canvasRef.current.renderAll();
+    
+    setSelectedObject(null);
+    setShowClearDialog(false);
+  };
+
+  const cancelClearCanvas = () => {
+    setShowClearDialog(false);
+  };
+
   const handleDownload = () => {
     if (!canvasRef.current) return;
     downloadCanvas(canvasRef.current);
@@ -316,23 +338,53 @@ function App() {
   }
 
   return (
-    <AppLayout
-      canvasRef={canvasRef}
-      selectedObject={selectedObject}
-      backgroundColor={backgroundColor}
-      onBackgroundColorChange={handleBackgroundColorChange}
-      onAddText={handleAddText}
-      onUpdateText={handleUpdateText}
-      onImageUpload={handleImageUpload}
-      onRemoveBackground={handleRemoveBackground}
-      onDeleteObject={handleDeleteObject}
-      onCopyObject={handleCopyObject}
-      onPasteObject={handlePasteObject}
-      canPaste={!!copiedObject}
-      onAIGenerate={handleAIGenerate}
-      onLuckyGenerate={handleLuckyGenerate}
-      onDownload={handleDownload}
-    />
+    <>
+      <AppLayout
+        canvasRef={canvasRef}
+        selectedObject={selectedObject}
+        backgroundColor={backgroundColor}
+        onBackgroundColorChange={handleBackgroundColorChange}
+        onAddText={handleAddText}
+        onUpdateText={handleUpdateText}
+        onImageUpload={handleImageUpload}
+        onRemoveBackground={handleRemoveBackground}
+        onDeleteObject={handleDeleteObject}
+        onCopyObject={handleCopyObject}
+        onPasteObject={handlePasteObject}
+        canPaste={!!copiedObject}
+        onClearCanvas={handleClearCanvas}
+        onAIGenerate={handleAIGenerate}
+        onLuckyGenerate={handleLuckyGenerate}
+        onDownload={handleDownload}
+      />
+      
+      {showClearDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Clear Canvas
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to clear the canvas? This will remove all objects and cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelClearCanvas}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmClearCanvas}
+                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+              >
+                Clear Canvas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

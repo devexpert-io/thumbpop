@@ -18,6 +18,7 @@ interface AppLayoutProps {
   onCopyObject: () => void;
   onPasteObject: () => void;
   canPaste: boolean;
+  onClearCanvas: () => void;
   onAIGenerate: (videoContext: string, prompt: string) => void;
   onLuckyGenerate: (videoContext: string) => void;
   onDownload: () => void;
@@ -36,6 +37,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onCopyObject,
   onPasteObject,
   canPaste,
+  onClearCanvas,
   onAIGenerate,
   onLuckyGenerate,
   onDownload,
@@ -62,6 +64,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             onCopy={onCopyObject}
             onPaste={onPasteObject}
             onDelete={onDeleteObject}
+            onClear={onClearCanvas}
           />
           <div className="flex-1 flex items-center justify-center p-8">
             <ThumbnailCanvas canvasRef={canvasRef} />
