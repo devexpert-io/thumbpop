@@ -28,27 +28,56 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    const setupCanvasEvents = () => {
+      if (!canvasRef.current) {
+        console.log('Canvas not ready yet');
+        return;
+      }
+      
+      const canvas = canvasRef.current;
+      console.log('Setting up canvas event listeners');
+      
+      canvas.on('selection:created', (e: any) => {
+        const obj = e.selected?.[0] || null;
+        console.log('Selected object type:', obj?.type, 'Object:', obj);
+        setSelectedObject(obj);
+      });
+      
+      canvas.on('selection:updated', (e: any) => {
+        const obj = e.selected?.[0] || null;
+        console.log('Updated object type:', obj?.type, 'Object:', obj);
+        setSelectedObject(obj);
+      });
+      
+      canvas.on('selection:cleared', () => {
+        console.log('Selection cleared');
+        setSelectedObject(null);
+      });
+      
+      return () => {
+        canvas.off('selection:created');
+        canvas.off('selection:updated');
+        canvas.off('selection:cleared');
+      };
+    };
     
-    const canvas = canvasRef.current;
+    // Try immediately
+    const cleanup = setupCanvasEvents();
     
-    canvas.on('selection:created', (e: any) => {
-      setSelectedObject(e.selected?.[0] || null);
-    });
-    
-    canvas.on('selection:updated', (e: any) => {
-      setSelectedObject(e.selected?.[0] || null);
-    });
-    
-    canvas.on('selection:cleared', () => {
-      setSelectedObject(null);
-    });
+    // Also try after a short delay to ensure canvas is ready
+    const timer = setTimeout(() => {
+      setupCanvasEvents();
+    }, 500);
     
     return () => {
-      canvas.off('selection:created');
-      canvas.off('selection:updated');
-      canvas.off('selection:cleared');
+      clearTimeout(timer);
+      cleanup?.();
     };
+  }, []);
+  
+  // Additional effect to watch for canvas initialization
+  useEffect(() => {
+    console.log('Canvas ref changed:', canvasRef.current);
   }, [canvasRef.current]);
 
   const handleApiKeySubmit = (key: string) => {
@@ -89,15 +118,21 @@ function App() {
   };
 
   const handleRemoveBackground = async () => {
-    if (!selectedObject || selectedObject.type !== 'image' || !canvasRef.current) return;
+    if (!selectedObject || (selectedObject.type !== 'image' && (selectedObject as any).type !== 'Image') || !canvasRef.current) return;
     
     const image = selectedObject as FabricImage;
     const imageUrl = image.getSrc();
     
     try {
+      console.log('Starting background removal...');
+      const startTime = performance.now();
+      
       const processedImageUrl = await backgroundRemovalService.removeBackground(imageUrl);
       
-      FabricImage.fromURL(processedImageUrl).then((newImg) => {
+      const endTime = performance.now();
+      console.log(`Background removed in ${((endTime - startTime) / 1000).toFixed(2)} seconds`);
+      
+      await FabricImage.fromURL(processedImageUrl).then((newImg) => {
         newImg.set({
           left: image.left,
           top: image.top,
@@ -112,8 +147,12 @@ function App() {
         canvasRef.current?.renderAll();
         setSelectedObject(newImg);
       });
+      
+      // Success feedback
+      console.log('✅ Background removed successfully!');
     } catch (error: any) {
-      alert(error.message);
+      console.error('Background removal error:', error);
+      alert(`Failed to remove background: ${error.message}`);
     }
   };
 

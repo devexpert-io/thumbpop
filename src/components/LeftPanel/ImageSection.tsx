@@ -16,9 +16,10 @@ const ImageSection: React.FC<ImageSectionProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rotation, setRotation] = useState(0);
   const [opacity, setOpacity] = useState(100);
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
 
   useEffect(() => {
-    if (selectedObject && selectedObject.type === 'image') {
+    if (selectedObject && (selectedObject.type === 'image' || selectedObject.type === 'Image')) {
       setRotation(selectedObject.angle || 0);
       setOpacity((selectedObject.opacity || 1) * 100);
     }
@@ -32,7 +33,7 @@ const ImageSection: React.FC<ImageSectionProps> = ({
   };
 
   const handleRotationChange = (value: number) => {
-    if (selectedObject && selectedObject.type === 'image') {
+    if (selectedObject && (selectedObject.type === 'image' || selectedObject.type === 'Image')) {
       setRotation(value);
       selectedObject.set('angle', value);
       selectedObject.canvas?.renderAll();
@@ -40,14 +41,16 @@ const ImageSection: React.FC<ImageSectionProps> = ({
   };
 
   const handleOpacityChange = (value: number) => {
-    if (selectedObject && selectedObject.type === 'image') {
+    if (selectedObject && (selectedObject.type === 'image' || selectedObject.type === 'Image')) {
       setOpacity(value);
       selectedObject.set('opacity', value / 100);
       selectedObject.canvas?.renderAll();
     }
   };
 
-  const isImageSelected = selectedObject && selectedObject.type === 'image';
+  const isImageSelected = selectedObject && (selectedObject.type === 'image' || selectedObject.type === 'Image' || (selectedObject as any).isType?.('Image'));
+  
+  console.log('ImageSection - selectedObject type:', selectedObject?.type, 'isImageSelected:', isImageSelected);
 
   return (
     <div className="space-y-4">
@@ -70,11 +73,28 @@ const ImageSection: React.FC<ImageSectionProps> = ({
       {isImageSelected && (
         <>
           <button
-            onClick={onRemoveBackground}
-            className="w-full py-3 px-4 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"
+            onClick={async () => {
+              setIsRemovingBg(true);
+              try {
+                await onRemoveBackground();
+              } finally {
+                setIsRemovingBg(false);
+              }
+            }}
+            disabled={isRemovingBg}
+            className="w-full py-3 px-4 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Scissors size={20} />
-            <span>Remove Background</span>
+            {isRemovingBg ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <span>Processing...</span>
+              </>
+            ) : (
+              <>
+                <Scissors size={20} />
+                <span>Remove Background</span>
+              </>
+            )}
           </button>
 
           <div>
@@ -112,6 +132,8 @@ const ImageSection: React.FC<ImageSectionProps> = ({
               <li>• Drag corners to resize</li>
               <li>• Drag to move position</li>
               <li>• Use Remove Background for transparent PNGs</li>
+              <li>• First background removal loads AI model (~10-20s)</li>
+              <li>• Subsequent removals are much faster (~2-5s)</li>
             </ul>
           </div>
         </>
