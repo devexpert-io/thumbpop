@@ -17,6 +17,7 @@ function App() {
   const [backgroundColor, setBackgroundColor] = useState('#1e40af');
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
+  const [copiedObject, setCopiedObject] = useState<any>(null);
 
   useEffect(() => {
     const savedKey = localStorage.getItem('gemini_api_key');
@@ -45,6 +46,22 @@ function App() {
           setSelectedObject(null);
         }
       }
+      
+      // Copy (Ctrl/Cmd + C)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        if (selectedObject) {
+          e.preventDefault();
+          handleCopyObject();
+        }
+      }
+      
+      // Paste (Ctrl/Cmd + V)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        if (copiedObject) {
+          e.preventDefault();
+          handlePasteObject();
+        }
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -52,7 +69,7 @@ function App() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedObject]);
+  }, [selectedObject, copiedObject]);
 
   useEffect(() => {
     const setupCanvasEvents = () => {
@@ -217,6 +234,29 @@ function App() {
     setSelectedObject(null);
   };
 
+  const handleCopyObject = () => {
+    if (!selectedObject || !canvasRef.current) return;
+    
+    selectedObject.clone().then((cloned: any) => {
+      setCopiedObject(cloned);
+    });
+  };
+
+  const handlePasteObject = () => {
+    if (!copiedObject || !canvasRef.current) return;
+    
+    copiedObject.clone().then((cloned: any) => {
+      cloned.set({
+        left: cloned.left + 10,
+        top: cloned.top + 10,
+      });
+      canvasRef.current?.add(cloned);
+      canvasRef.current?.setActiveObject(cloned);
+      canvasRef.current?.renderAll();
+      setSelectedObject(cloned);
+    });
+  };
+
   const handleDownload = () => {
     if (!canvasRef.current) return;
     downloadCanvas(canvasRef.current);
@@ -286,6 +326,9 @@ function App() {
       onImageUpload={handleImageUpload}
       onRemoveBackground={handleRemoveBackground}
       onDeleteObject={handleDeleteObject}
+      onCopyObject={handleCopyObject}
+      onPasteObject={handlePasteObject}
+      canPaste={!!copiedObject}
       onAIGenerate={handleAIGenerate}
       onLuckyGenerate={handleLuckyGenerate}
       onDownload={handleDownload}

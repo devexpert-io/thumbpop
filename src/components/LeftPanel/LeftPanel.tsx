@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import BackgroundSection from './BackgroundSection';
 import TextSection from './TextSection';
 import ImageSection from './ImageSection';
-import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { FabricObject } from 'fabric';
 
 interface LeftPanelProps {
@@ -13,7 +13,6 @@ interface LeftPanelProps {
   onUpdateText: (options: any) => void;
   onImageUpload: (file: File) => void;
   onRemoveBackground: () => void;
-  onDeleteObject: () => void;
 }
 
 const LeftPanel: React.FC<LeftPanelProps> = ({
@@ -24,7 +23,6 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
   onUpdateText,
   onImageUpload,
   onRemoveBackground,
-  onDeleteObject,
 }) => {
   const [expandedSection, setExpandedSection] = useState<string>('background');
 
@@ -38,17 +36,6 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
         <h2 className="text-xl font-bold">Editor Controls</h2>
       </div>
       
-      {selectedObject && (
-        <div className="p-4 bg-yellow-50 border-b border-yellow-200">
-          <button
-            onClick={onDeleteObject}
-            className="w-full py-2 px-4 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors flex items-center justify-center space-x-2"
-          >
-            <Trash2 size={18} />
-            <span>Delete Selected Object</span>
-          </button>
-        </div>
-      )}
       
       <div className="flex-1 overflow-y-auto">
         <div className="border-b">
