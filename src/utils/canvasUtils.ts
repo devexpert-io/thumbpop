@@ -84,17 +84,25 @@ export const replaceCanvasWithImage = async (
   canvas: Canvas,
   imageUrl: string
 ) => {
+  // Save the background color before clearing
+  const bgColor = canvas.backgroundColor;
   canvas.clear();
+  // Restore the background color
+  canvas.backgroundColor = bgColor;
   
   const img = await loadImageFromUrl(imageUrl);
+  
+  // Use the original canvas dimensions (1280x720), not the scaled display size
+  const originalWidth = 1280;
+  const originalHeight = 720;
   
   img.set({
     left: 0,
     top: 0,
-    scaleX: canvas.width! / img.width!,
-    scaleY: canvas.height! / img.height!,
-    selectable: false,
-    evented: false,
+    scaleX: originalWidth / img.width!,
+    scaleY: originalHeight / img.height!,
+    selectable: true,
+    evented: true,
   });
   
   canvas.add(img);
