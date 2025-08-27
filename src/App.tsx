@@ -27,30 +27,52 @@ function App() {
     }
   }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      // Delete or Backspace key
+      if ((e.key === 'Delete' || e.key === 'Backspace')) {
+        if (selectedObject && canvasRef.current) {
+          e.preventDefault();
+          canvasRef.current.remove(selectedObject);
+          canvasRef.current.discardActiveObject();
+          canvasRef.current.renderAll();
+          setSelectedObject(null);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedObject]);
+
   useEffect(() => {
     const setupCanvasEvents = () => {
       if (!canvasRef.current) {
-        console.log('Canvas not ready yet');
         return;
       }
       
       const canvas = canvasRef.current;
-      console.log('Setting up canvas event listeners');
       
       canvas.on('selection:created', (e: any) => {
         const obj = e.selected?.[0] || null;
-        console.log('Selected object type:', obj?.type, 'Object:', obj);
         setSelectedObject(obj);
       });
       
       canvas.on('selection:updated', (e: any) => {
         const obj = e.selected?.[0] || null;
-        console.log('Updated object type:', obj?.type, 'Object:', obj);
         setSelectedObject(obj);
       });
       
       canvas.on('selection:cleared', () => {
-        console.log('Selection cleared');
         setSelectedObject(null);
       });
       
@@ -75,10 +97,6 @@ function App() {
     };
   }, []);
   
-  // Additional effect to watch for canvas initialization
-  useEffect(() => {
-    console.log('Canvas ref changed:', canvasRef.current);
-  }, [canvasRef.current]);
 
   const handleApiKeySubmit = (key: string) => {
     localStorage.setItem('gemini_api_key', key);
