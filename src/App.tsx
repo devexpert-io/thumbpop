@@ -19,7 +19,7 @@ function App() {
   const [selectedObject, setSelectedObject] = useState<FabricObject | null>(null);
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [apiKey, setApiKey] = useState('');
-  const [showApiKeyModal, setShowApiKeyModal] = useState(true);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [copiedObject, setCopiedObject] = useState<any>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
@@ -137,7 +137,6 @@ function App() {
     if (savedKey) {
       setApiKey(savedKey);
       geminiService.initialize(savedKey);
-      setShowApiKeyModal(false);
     }
   }, []);
 
@@ -398,6 +397,12 @@ function App() {
   const handleAIGenerate = async (videoContext: string, prompt: string) => {
     if (!canvasRef.current) return;
     
+    // Check if API key is available
+    if (!geminiService.isInitialized()) {
+      setShowApiKeyModal(true);
+      return;
+    }
+    
     try {
       // Temporarily disable history tracking
       isRestoringHistoryRef.current = true;
@@ -423,6 +428,12 @@ function App() {
 
   const handleLuckyGenerate = async (videoContext: string) => {
     if (!canvasRef.current) return;
+    
+    // Check if API key is available
+    if (!geminiService.isInitialized()) {
+      setShowApiKeyModal(true);
+      return;
+    }
     
     try {
       // Temporarily disable history tracking
@@ -555,17 +566,29 @@ function App() {
   const confirmClearCanvas = () => {
     if (!canvasRef.current) return;
     
-    // Clear all objects but preserve background color
-    const bgColor = canvasRef.current.backgroundColor;
-    canvasRef.current.clear();
-    canvasRef.current.backgroundColor = bgColor;
-    canvasRef.current.renderAll();
+    // Validate canvas is properly initialized
+    if (!canvasRef.current.getContext || !canvasRef.current.getContext()) {
+      showToast('Canvas is not ready. Please try again.', 'error');
+      return;
+    }
     
-    setSelectedObject(null);
-    setShowClearDialog(false);
-    
-    // Save immediately after clearing
-    saveCanvasState(canvasRef.current);
+    try {
+      // Clear all objects but preserve background color
+      const bgColor = canvasRef.current.backgroundColor;
+      canvasRef.current.clear();
+      canvasRef.current.backgroundColor = bgColor;
+      canvasRef.current.renderAll();
+      
+      setSelectedObject(null);
+      setShowClearDialog(false);
+      
+      // Save immediately after clearing
+      saveCanvasState(canvasRef.current);
+    } catch (error) {
+      console.error('Error clearing canvas:', error);
+      showToast('Failed to clear canvas', 'error');
+      setShowClearDialog(false);
+    }
   };
 
   const cancelClearCanvas = () => {
@@ -577,58 +600,6 @@ function App() {
     downloadCanvas(canvasRef.current);
   };
 
-  if (showApiKeyModal) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-          <h2 className="text-2xl font-bold mb-4">Welcome to YouTube Thumbnail Pro!</h2>
-          <p className="text-gray-600 mb-4">
-            To use the AI enhancement features, please enter your Gemini API key.
-          </p>
-          <p className="text-sm text-gray-500 mb-4">
-            You can get your API key from{' '}
-            <a
-              href="https://aistudio.google.com/app/apikey"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Google AI Studio
-            </a>
-          </p>
-          <input
-            type="password"
-            placeholder="Enter your Gemini API key"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.currentTarget.value) {
-                handleApiKeySubmit(e.currentTarget.value);
-              }
-            }}
-          />
-          <div className="flex space-x-3">
-            <button
-              onClick={() => {
-                const input = document.querySelector('input[type="password"]') as HTMLInputElement;
-                if (input?.value) {
-                  handleApiKeySubmit(input.value);
-                }
-              }}
-              className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Continue
-            </button>
-            <button
-              onClick={() => setShowApiKeyModal(false)}
-              className="flex-1 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-            >
-              Skip (Editor Only)
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -657,6 +628,59 @@ function App() {
       />
       
       <ToastContainer toasts={toasts} removeToast={removeToast} />
+      
+      {/* API Key Modal */}
+      {showApiKeyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold mb-4">🤖 AI Features Require API Key</h2>
+            <p className="text-gray-600 mb-4">
+              To use AI enhancement features, you'll need a Gemini API key. This enables advanced thumbnail generation and optimization.
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              Get your free API key from{' '}
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Google AI Studio
+              </a>
+            </p>
+            <input
+              type="password"
+              placeholder="Enter your Gemini API key"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.currentTarget.value) {
+                  handleApiKeySubmit(e.currentTarget.value);
+                }
+              }}
+              autoFocus
+            />
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  const input = document.querySelector('input[type="password"]') as HTMLInputElement;
+                  if (input?.value) {
+                    handleApiKeySubmit(input.value);
+                  }
+                }}
+                className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Save & Continue
+              </button>
+              <button
+                onClick={() => setShowApiKeyModal(false)}
+                className="flex-1 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {showClearDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

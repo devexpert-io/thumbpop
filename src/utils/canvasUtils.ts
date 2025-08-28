@@ -84,11 +84,21 @@ export const replaceCanvasWithImage = async (
   canvas: Canvas,
   imageUrl: string
 ) => {
-  // Save the background color before clearing
-  const bgColor = canvas.backgroundColor;
-  canvas.clear();
-  // Restore the background color
-  canvas.backgroundColor = bgColor;
+  // Validate canvas is properly initialized
+  if (!canvas || !canvas.getContext || !canvas.getContext()) {
+    throw new Error('Canvas is not properly initialized');
+  }
+
+  try {
+    // Save the background color before clearing
+    const bgColor = canvas.backgroundColor;
+    canvas.clear();
+    // Restore the background color
+    canvas.backgroundColor = bgColor;
+  } catch (error) {
+    console.error('Error clearing canvas in replaceCanvasWithImage:', error);
+    throw new Error('Failed to clear canvas for image replacement');
+  }
   
   const img = await loadImageFromUrl(imageUrl);
   
