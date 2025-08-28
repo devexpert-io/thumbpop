@@ -119,7 +119,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
             alt="ThumbPop" 
             className="h-8 w-auto mr-2"
           />
-          <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-500 to-cyan-400 bg-clip-text text-transparent">
             ThumbPop
           </h1>
         </div>
@@ -225,7 +225,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                 <button
                   onClick={handleGenerate}
                   disabled={isLoading}
-                  className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium whitespace-nowrap"
+                  className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium whitespace-nowrap"
                 >
                   {isLoading ? (
                     <>
@@ -243,7 +243,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                 <button
                   onClick={handleLucky}
                   disabled={isLoading}
-                  className="px-6 py-2.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium whitespace-nowrap"
+                  className="px-6 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium whitespace-nowrap"
                   title="Auto-generate with optimized prompt for maximum CTR!"
                 >
                   {isLoading ? (
@@ -259,7 +259,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                 {/* API Key Settings Button */}
                 <button
                   onClick={onEditApiKey}
-                  className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all flex items-center justify-center"
+                  className="p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all flex items-center justify-center"
                   title="Edit Gemini API Key"
                 >
                   <Settings size={18} />
