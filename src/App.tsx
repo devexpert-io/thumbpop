@@ -448,6 +448,9 @@ function App() {
       } else {
         showToast(error.message, 'error');
       }
+      
+      // Re-throw the error so calling components know the operation failed
+      throw error;
     }
   };
 
@@ -494,6 +497,9 @@ function App() {
       } else {
         showToast(error.message, 'error');
       }
+      
+      // Re-throw the error so calling components know the operation failed
+      throw error;
     }
   };
 

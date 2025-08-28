@@ -87,7 +87,6 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
       await onAIGenerate(videoContext, userPrompt);
       showToast('AI enhancement applied successfully!', 'success');
     } catch (error) {
-      showToast('Failed to generate AI enhancement', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +104,6 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
       await onLuckyGenerate(videoContext);
       showToast('Lucky enhancement applied!', 'success');
     } catch (error) {
-      showToast('Failed to generate lucky enhancement', 'error');
     } finally {
       setIsLoading(false);
     }
