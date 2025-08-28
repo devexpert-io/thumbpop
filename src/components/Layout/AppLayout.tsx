@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ThumbnailCanvas from '../Canvas/ThumbnailCanvas';
-import LeftPanel from '../LeftPanel/LeftPanel';
 import RightPanel from '../RightPanel/RightPanel';
-import Toolbar from '../Toolbar/Toolbar';
+import EnhancedToolbar from '../Toolbar/EnhancedToolbar';
 import { FabricObject } from 'fabric';
 
 interface AppLayoutProps {
@@ -52,32 +51,24 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   canRedo,
   showToast,
 }) => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1400);
-  const [showLeftPanel, setShowLeftPanel] = useState(() => {
-    if (window.innerWidth < 1400) return false; // Mobile default
-    const saved = localStorage.getItem('thumbnailEditor_showLeftPanel');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showRightPanel, setShowRightPanel] = useState(() => {
-    if (window.innerWidth < 1400) return false; // Mobile default
+    if (window.innerWidth < 768) return false; // Mobile default
     const saved = localStorage.getItem('thumbnailEditor_showRightPanel');
     return saved !== null ? JSON.parse(saved) : true;
   });
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 1400;
+      const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
       
       // Auto-close mobile panels when switching to mobile
       if (mobile) {
-        setShowLeftPanel(false);
         setShowRightPanel(false);
       } else {
         // Restore saved panel state when switching to desktop
-        const savedLeft = localStorage.getItem('thumbnailEditor_showLeftPanel');
         const savedRight = localStorage.getItem('thumbnailEditor_showRightPanel');
-        setShowLeftPanel(savedLeft !== null ? JSON.parse(savedLeft) : true);
         setShowRightPanel(savedRight !== null ? JSON.parse(savedRight) : true);
       }
     };
@@ -89,12 +80,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   // Persist panel visibility to localStorage (only for desktop)
   useEffect(() => {
     if (!isMobile) {
-      localStorage.setItem('thumbnailEditor_showLeftPanel', JSON.stringify(showLeftPanel));
-    }
-  }, [showLeftPanel, isMobile]);
-
-  useEffect(() => {
-    if (!isMobile) {
       localStorage.setItem('thumbnailEditor_showRightPanel', JSON.stringify(showRightPanel));
     }
   }, [showRightPanel, isMobile]);
@@ -103,22 +88,28 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (showLeftPanel) setShowLeftPanel(false);
         if (showRightPanel) setShowRightPanel(false);
       }
     };
 
-    if (isMobile && (showLeftPanel || showRightPanel)) {
+    if (isMobile && showRightPanel) {
       document.addEventListener('keydown', handleKeyDown);
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isMobile, showLeftPanel, showRightPanel]);
+  }, [isMobile, showRightPanel]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      {/* Toolbar */}
+      {/* Enhanced Toolbar */}
       <div className="bg-white border-b border-gray-200">
-        <Toolbar
+        <EnhancedToolbar
+          selectedObject={selectedObject}
+          backgroundColor={backgroundColor}
+          onBackgroundColorChange={onBackgroundColorChange}
+          onAddText={onAddText}
+          onUpdateText={onUpdateText}
+          onImageUpload={onImageUpload}
+          onRemoveBackground={onRemoveBackground}
           hasSelection={!!selectedObject}
           canPaste={canPaste}
           onCopy={onCopyObject}
@@ -129,44 +120,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           onRedo={onRedo}
           canUndo={canUndo}
           canRedo={canRedo}
+          onDownload={onDownload}
         />
       </div>
 
       {/* Main content area - responsive layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel - toggle on desktop, modal on mobile */}
-        {!isMobile && showLeftPanel && (
-          <div className="w-80 bg-white shadow-lg overflow-y-auto border-r border-gray-200">
-            <LeftPanel
-              selectedObject={selectedObject}
-              backgroundColor={backgroundColor}
-              onBackgroundColorChange={onBackgroundColorChange}
-              onAddText={onAddText}
-              onUpdateText={onUpdateText}
-              onImageUpload={onImageUpload}
-              onRemoveBackground={onRemoveBackground}
-            />
-          </div>
-        )}
-
         {/* Canvas area - always visible */}
-        <div className="flex-1 bg-white shadow-2xl m-4 overflow-hidden flex flex-col">
+        <div className="flex-1 bg-white shadow-xl m-4 overflow-hidden flex flex-col relative z-10">
           {/* Desktop panel toggle buttons */}
           {!isMobile && (
-            <div className="flex justify-between items-center p-3 border-b border-gray-200 bg-gray-50">
-              <button
-                onClick={() => setShowLeftPanel(!showLeftPanel)}
-                className={`px-3 py-1.5 text-sm rounded transition-colors ${
-                  showLeftPanel
-                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                🛠️ Tools
-              </button>
-              <div className="text-sm text-gray-500 font-medium">
-                Thumbnail Editor
-              </div>
+            <div className="flex justify-end items-center p-3 border-b border-gray-200 bg-gray-50">
               <button
                 onClick={() => setShowRightPanel(!showRightPanel)}
                 className={`px-3 py-1.5 text-sm rounded transition-colors ${
@@ -175,7 +139,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                ✨ AI
+                ✨ AI Panel
               </button>
             </div>
           )}
@@ -202,62 +166,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       {/* Mobile action bar - only visible on mobile */}
       {isMobile && (
         <div className="bg-white border-t border-gray-200 p-3 safe-area-inset-bottom">
-          <div className="flex gap-3">
-            <button
-              className="flex-1 py-3 px-4 text-center bg-blue-100 hover:bg-blue-200 active:bg-blue-300 text-blue-700 rounded-lg font-medium transition-colors duration-150"
-              onClick={() => setShowLeftPanel(true)}
-            >
-              🛠️ Tools
-            </button>
-            <button
-              className="flex-1 py-3 px-4 text-center bg-purple-100 hover:bg-purple-200 active:bg-purple-300 text-purple-700 rounded-lg font-medium transition-colors duration-150"
-              onClick={() => setShowRightPanel(true)}
-            >
-              ✨ AI
-            </button>
-          </div>
+          <button
+            className="w-full py-3 px-4 text-center bg-purple-100 hover:bg-purple-200 active:bg-purple-300 text-purple-700 rounded-lg font-medium transition-colors duration-150"
+            onClick={() => setShowRightPanel(true)}
+          >
+            ✨ AI Enhancement
+          </button>
         </div>
       )}
 
-      {/* Modal overlays for mobile */}
-      {isMobile && showLeftPanel && (
-        <div 
-          className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowLeftPanel(false);
-            }
-          }}
-        >
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b border-gray-200">
-              <h2 className="text-xl font-bold">Tools</h2>
-              <button 
-                onClick={() => setShowLeftPanel(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl leading-none p-1"
-                aria-label="Close"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="overflow-y-auto flex-1">
-              <LeftPanel
-                selectedObject={selectedObject}
-                backgroundColor={backgroundColor}
-                onBackgroundColorChange={onBackgroundColorChange}
-                onAddText={onAddText}
-                onUpdateText={onUpdateText}
-                onImageUpload={onImageUpload}
-                onRemoveBackground={onRemoveBackground}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Modal overlay for mobile */}
       {isMobile && showRightPanel && (
         <div 
-          className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] bg-black bg-opacity-50 flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowRightPanel(false);
