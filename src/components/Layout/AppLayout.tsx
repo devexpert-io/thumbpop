@@ -22,6 +22,10 @@ interface AppLayoutProps {
   onAIGenerate: (videoContext: string, prompt: string) => void;
   onLuckyGenerate: (videoContext: string) => void;
   onDownload: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({
@@ -41,6 +45,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onAIGenerate,
   onLuckyGenerate,
   onDownload,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
 }) => {
   return (
     <div className="flex flex-col h-screen bg-gray-100">
@@ -65,6 +73,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             onPaste={onPasteObject}
             onDelete={onDeleteObject}
             onClear={onClearCanvas}
+            onUndo={onUndo}
+            onRedo={onRedo}
+            canUndo={canUndo}
+            canRedo={canRedo}
           />
           <div className="flex-1 flex items-center justify-center p-8">
             <ThumbnailCanvas canvasRef={canvasRef} />

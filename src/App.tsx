@@ -21,8 +21,86 @@ function App() {
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
   const [copiedObject, setCopiedObject] = useState<any>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  // Undo/Redo state
+  const canvasHistoryRef = useRef<string[]>([]);
+  const historyIndexRef = useRef<number>(-1);
+  const isRestoringHistoryRef = useRef<boolean>(false);
   
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Update undo/redo button states
+  const updateUndoRedoState = () => {
+    setCanUndo(historyIndexRef.current > 0);
+    setCanRedo(historyIndexRef.current < canvasHistoryRef.current.length - 1);
+  };
+
+  // Save current canvas state to history
+  const saveToHistory = () => {
+    if (!canvasRef.current || isRestoringHistoryRef.current) return;
+    
+    const currentState = JSON.stringify(canvasRef.current.toJSON());
+    const bgColor = canvasRef.current.backgroundColor;
+    
+    // If we're not at the end of history, truncate future states
+    if (historyIndexRef.current < canvasHistoryRef.current.length - 1) {
+      canvasHistoryRef.current = canvasHistoryRef.current.slice(0, historyIndexRef.current + 1);
+    }
+    
+    // Add current state to history
+    canvasHistoryRef.current.push(JSON.stringify({
+      objects: currentState,
+      backgroundColor: bgColor
+    }));
+    
+    // Limit history to 50 states to prevent memory issues
+    if (canvasHistoryRef.current.length > 50) {
+      canvasHistoryRef.current.shift();
+    } else {
+      historyIndexRef.current++;
+    }
+    
+    // Update button states
+    updateUndoRedoState();
+  };
+
+  // Undo function
+  const handleUndo = () => {
+    if (!canvasRef.current || historyIndexRef.current <= 0) return;
+    
+    isRestoringHistoryRef.current = true;
+    historyIndexRef.current--;
+    
+    const prevState = JSON.parse(canvasHistoryRef.current[historyIndexRef.current]);
+    const bgColor = prevState.backgroundColor;
+    
+    canvasRef.current.loadFromJSON(prevState.objects).then(() => {
+      canvasRef.current!.backgroundColor = bgColor;
+      canvasRef.current!.renderAll();
+      isRestoringHistoryRef.current = false;
+      updateUndoRedoState();
+    });
+  };
+
+  // Redo function
+  const handleRedo = () => {
+    if (!canvasRef.current || historyIndexRef.current >= canvasHistoryRef.current.length - 1) return;
+    
+    isRestoringHistoryRef.current = true;
+    historyIndexRef.current++;
+    
+    const nextState = JSON.parse(canvasHistoryRef.current[historyIndexRef.current]);
+    const bgColor = nextState.backgroundColor;
+    
+    canvasRef.current.loadFromJSON(nextState.objects).then(() => {
+      canvasRef.current!.backgroundColor = bgColor;
+      canvasRef.current!.renderAll();
+      isRestoringHistoryRef.current = false;
+      updateUndoRedoState();
+    });
+  };
 
   // Debounced auto-save function
   const debouncedSave = () => {
@@ -84,6 +162,18 @@ function App() {
           handlePasteObject();
         }
       }
+      
+      // Undo (Ctrl/Cmd + Z)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      }
+      
+      // Redo (Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y)
+      if ((e.ctrlKey || e.metaKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
+        e.preventDefault();
+        handleRedo();
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -124,24 +214,30 @@ function App() {
         setSelectedObject(null);
       });
       
-      // Auto-save on canvas changes
-      const saveHandler = () => {
+      // Save to history on canvas changes
+      const historyHandler = () => {
+        saveToHistory();
         debouncedSave();
       };
       
-      canvas.on('object:added', saveHandler);
-      canvas.on('object:removed', saveHandler);
-      canvas.on('object:modified', saveHandler);
-      canvas.on('path:created', saveHandler);
+      canvas.on('object:added', historyHandler);
+      canvas.on('object:removed', historyHandler);
+      canvas.on('object:modified', historyHandler);
+      canvas.on('path:created', historyHandler);
+      
+      // Save initial state
+      setTimeout(() => {
+        saveToHistory();
+      }, 100);
       
       return () => {
         canvas.off('selection:created');
         canvas.off('selection:updated');
         canvas.off('selection:cleared');
-        canvas.off('object:added', saveHandler);
-        canvas.off('object:removed', saveHandler);
-        canvas.off('object:modified', saveHandler);
-        canvas.off('path:created', saveHandler);
+        canvas.off('object:added', historyHandler);
+        canvas.off('object:removed', historyHandler);
+        canvas.off('object:modified', historyHandler);
+        canvas.off('path:created', historyHandler);
       };
     };
     
@@ -176,6 +272,7 @@ function App() {
     if (canvasRef.current) {
       canvasRef.current.backgroundColor = color;
       canvasRef.current.renderAll();
+      saveToHistory(); // Save to history when background color changes
       debouncedSave(); // Auto-save background color changes
     }
   };
@@ -408,6 +505,10 @@ function App() {
         onAIGenerate={handleAIGenerate}
         onLuckyGenerate={handleLuckyGenerate}
         onDownload={handleDownload}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
       
       {showClearDialog && (

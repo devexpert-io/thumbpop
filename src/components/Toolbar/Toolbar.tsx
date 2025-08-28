@@ -1,5 +1,5 @@
 import React from 'react';
-import { Copy, Clipboard, Trash2, RotateCcw } from 'lucide-react';
+import { Copy, Clipboard, Trash2, RotateCcw, Undo, Redo } from 'lucide-react';
 
 interface ToolbarProps {
   hasSelection: boolean;
@@ -8,6 +8,10 @@ interface ToolbarProps {
   onPaste: () => void;
   onDelete: () => void;
   onClear: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -17,11 +21,43 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onPaste,
   onDelete,
   onClear,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
 }) => {
   return (
     <div className="bg-white border-b border-gray-200 px-4 py-3">
       <div className="flex items-center space-x-2">
         <span className="text-sm font-medium text-gray-600 mr-3">Actions:</span>
+        
+        <button
+          onClick={onUndo}
+          disabled={!canUndo}
+          className={`p-2 rounded-md transition-colors ${
+            canUndo
+              ? 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              : 'text-gray-300 cursor-not-allowed'
+          }`}
+          title="Undo (Ctrl/Cmd+Z)"
+        >
+          <Undo size={18} />
+        </button>
+        
+        <button
+          onClick={onRedo}
+          disabled={!canRedo}
+          className={`p-2 rounded-md transition-colors ${
+            canRedo
+              ? 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              : 'text-gray-300 cursor-not-allowed'
+          }`}
+          title="Redo (Ctrl/Cmd+Shift+Z)"
+        >
+          <Redo size={18} />
+        </button>
+        
+        <div className="h-5 w-px bg-gray-300 mx-1" />
         
         <button
           onClick={onCopy}
