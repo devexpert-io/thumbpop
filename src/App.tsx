@@ -380,14 +380,6 @@ function App() {
     setSelectedObject(null);
   };
 
-  const handleCopyObject = () => {
-    if (!selectedObject || !canvasRef.current) return;
-    
-    selectedObject.clone().then((cloned: any) => {
-      setCopiedObject(cloned);
-    });
-  };
-
   const handlePasteObject = () => {
     if (!copiedObject || !canvasRef.current) return;
     
@@ -416,9 +408,13 @@ function App() {
         for (const type of clipboardItem.types) {
           if (type.startsWith('image/')) {
             const blob = await clipboardItem.getType(type);
-            const imageUrl = URL.createObjectURL(blob);
-            await addImageToCanvas(canvasRef.current, imageUrl);
-            URL.revokeObjectURL(imageUrl); // Clean up object URL
+            // Convert blob to data URL instead of using object URL to avoid Fabric.js errors
+            const reader = new FileReader();
+            reader.onload = async () => {
+              const dataUrl = reader.result as string;
+              await addImageToCanvas(canvasRef.current!, dataUrl);
+            };
+            reader.readAsDataURL(blob);
             return true;
           }
         }
@@ -441,7 +437,8 @@ function App() {
   };
 
   // Track if the internal copy has been used for paste
-  const hasPastedInternalRef = useRef(false);
+
+  // Enhanced paste handler with single-use internal copy
 
   // Enhanced paste handler with single-use internal copy
   const handleSmartPaste = async () => {
