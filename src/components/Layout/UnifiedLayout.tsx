@@ -61,14 +61,14 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
 
   // Load saved video context
   useEffect(() => {
-    const saved = localStorage.getItem('thumbnailEditor_videoContext');
+    const saved = localStorage.getItem('thumbpop_videoContext');
     if (saved) setVideoContext(saved);
   }, []);
 
   // Save video context
   useEffect(() => {
     if (videoContext) {
-      localStorage.setItem('thumbnailEditor_videoContext', videoContext);
+      localStorage.setItem('thumbpop_videoContext', videoContext);
     }
   }, [videoContext]);
 

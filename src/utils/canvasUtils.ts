@@ -143,7 +143,7 @@ export const saveCanvasState = (canvas: Canvas): void => {
       backgroundColor: canvas.backgroundColor,
       timestamp: Date.now(),
     };
-    localStorage.setItem('thumbnail_pro_canvas', JSON.stringify(canvasData));
+    localStorage.setItem('thumbpop_canvas', JSON.stringify(canvasData));
   } catch (error) {
     console.warn('Failed to save canvas state to localStorage:', error);
   }
@@ -163,7 +163,7 @@ export const loadCanvasState = (canvas: Canvas): boolean => {
       return false;
     }
 
-    const savedData = localStorage.getItem('thumbnail_pro_canvas');
+    const savedData = localStorage.getItem('thumbpop_canvas');
     if (!savedData) return false;
     
     const canvasData = JSON.parse(savedData);

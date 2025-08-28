@@ -13,7 +13,7 @@ export const saveTextProperties = (properties: Partial<typeof DEFAULT_TEXT_PROPE
   try {
     const currentProperties = loadTextProperties();
     const updatedProperties = { ...currentProperties, ...properties };
-    localStorage.setItem('thumbnail_pro_text_properties', JSON.stringify(updatedProperties));
+    localStorage.setItem('thumbpop_text_properties', JSON.stringify(updatedProperties));
   } catch (error) {
     console.warn('Failed to save text properties to localStorage:', error);
   }
@@ -22,7 +22,7 @@ export const saveTextProperties = (properties: Partial<typeof DEFAULT_TEXT_PROPE
 // Load text properties from localStorage
 export const loadTextProperties = (): typeof DEFAULT_TEXT_PROPERTIES => {
   try {
-    const savedData = localStorage.getItem('thumbnail_pro_text_properties');
+    const savedData = localStorage.getItem('thumbpop_text_properties');
     if (!savedData) return DEFAULT_TEXT_PROPERTIES;
     
     const parsed = JSON.parse(savedData);

@@ -1,6 +1,12 @@
 {
-  "name": "thumbnail-pro",
+  "name": "thumbpop",
   "version": "1.0.0",
+  "description": "ThumbPop - AI-Powered YouTube Thumbnail Creator",
+  "homepage": "https://github.com/devexpert-io/thumbpop",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devexpert-io/thumbpop.git"
+  },
   "main": "index.js",
   "scripts": {
     "start": "react-scripts start",
@@ -8,10 +14,9 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-  "keywords": [],
+  "keywords": ["youtube", "thumbnail", "ai", "creator", "design", "thumbpop"],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@google/genai": "^1.15.0",
     "@imgly/background-removal": "^1.7.0",

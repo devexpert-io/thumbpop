@@ -56,7 +56,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showRightPanel, setShowRightPanel] = useState(() => {
     if (window.innerWidth < 768) return false; // Mobile default
-    const saved = localStorage.getItem('thumbnailEditor_showRightPanel');
+    const saved = localStorage.getItem('thumbpop_showRightPanel');
     return saved !== null ? JSON.parse(saved) : true;
   });
 
@@ -70,7 +70,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         setShowRightPanel(false);
       } else {
         // Restore saved panel state when switching to desktop
-        const savedRight = localStorage.getItem('thumbnailEditor_showRightPanel');
+        const savedRight = localStorage.getItem('thumbpop_showRightPanel');
         setShowRightPanel(savedRight !== null ? JSON.parse(savedRight) : true);
       }
     };
@@ -82,7 +82,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   // Persist panel visibility to localStorage (only for desktop)
   useEffect(() => {
     if (!isMobile) {
-      localStorage.setItem('thumbnailEditor_showRightPanel', JSON.stringify(showRightPanel));
+      localStorage.setItem('thumbpop_showRightPanel', JSON.stringify(showRightPanel));
     }
   }, [showRightPanel, isMobile]);
 
