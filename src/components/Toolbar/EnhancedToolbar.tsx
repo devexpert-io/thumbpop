@@ -7,6 +7,7 @@ import {
 import { ChromePicker } from 'react-color';
 import { FabricObject, IText } from 'fabric';
 import { saveTextProperties, loadTextProperties } from '../../utils/textPropertiesUtils';
+import AdvancedMobileToolbar from './AdvancedMobileToolbar';
 
 interface EnhancedToolbarProps {
   selectedObject: FabricObject | null;
@@ -62,6 +63,7 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
   const [showBgColorPicker, setShowBgColorPicker] = useState(false);
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
   const [showStrokeColorPicker, setShowStrokeColorPicker] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const bgPickerRef = useRef<HTMLDivElement>(null);
   const textPickerRef = useRef<HTMLDivElement>(null);
   const strokePickerRef = useRef<HTMLDivElement>(null);
@@ -108,8 +110,20 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
     }
   }, [selectedObject]);
 
-  // Handle clicks outside color pickers
+  // Handle screen size changes
   useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Handle clicks outside color pickers (desktop only)
+  useEffect(() => {
+    if (isMobile) return; // Skip on mobile
+
     const handleClickOutside = (event: MouseEvent) => {
       if (bgPickerRef.current && !bgPickerRef.current.contains(event.target as Node)) {
         setShowBgColorPicker(false);
@@ -124,7 +138,7 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isMobile]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -176,6 +190,33 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
     onUpdateText(updates);
   };
 
+  // Render mobile version on small screens
+  if (isMobile) {
+    return (
+      <AdvancedMobileToolbar
+        selectedObject={selectedObject}
+        backgroundColor={backgroundColor}
+        onBackgroundColorChange={onBackgroundColorChange}
+        onAddText={onAddText}
+        onUpdateText={onUpdateText}
+        onImageUpload={onImageUpload}
+        onRemoveBackground={onRemoveBackground}
+        hasSelection={hasSelection}
+        canPaste={canPaste}
+        onCopy={onCopy}
+        onPaste={onPaste}
+        onDelete={onDelete}
+        onClear={onClear}
+        onUndo={onUndo}
+        onRedo={onRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onDownload={onDownload}
+      />
+    );
+  }
+
+  // Render desktop version
   return (
     <div className="bg-white border-b border-gray-200">
       <div className="flex items-center px-4 py-2 gap-2 overflow-x-auto">
