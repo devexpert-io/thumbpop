@@ -157,10 +157,8 @@ function App() {
       
       // Paste (Ctrl/Cmd + V)
       if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-        if (copiedObject) {
-          e.preventDefault();
-          handlePasteObject();
-        }
+        e.preventDefault();
+        handlePasteFromClipboard();
       }
       
       // Undo (Ctrl/Cmd + Z)
@@ -402,6 +400,45 @@ function App() {
       canvasRef.current?.renderAll();
       setSelectedObject(cloned);
     });
+  };
+
+  // Handle paste from system clipboard
+  const handlePasteFromClipboard = async () => {
+    if (!canvasRef.current) return;
+    
+    try {
+      // Read clipboard data
+      const clipboardItems = await navigator.clipboard.read();
+      
+      for (const clipboardItem of clipboardItems) {
+        // Check for image data
+        for (const type of clipboardItem.types) {
+          if (type.startsWith('image/')) {
+            const blob = await clipboardItem.getType(type);
+            const imageUrl = URL.createObjectURL(blob);
+            await addImageToCanvas(canvasRef.current, imageUrl);
+            URL.revokeObjectURL(imageUrl); // Clean up object URL
+            return;
+          }
+        }
+        
+        // Check for text data
+        if (clipboardItem.types.includes('text/plain')) {
+          const blob = await clipboardItem.getType('text/plain');
+          const text = await blob.text();
+          if (text) {
+            addTextToCanvas(canvasRef.current, text);
+            return;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to read clipboard contents: ', err);
+      // Fallback to existing paste functionality
+      if (copiedObject) {
+        handlePasteObject();
+      }
+    }
   };
 
   const handleClearCanvas = () => {
