@@ -111,6 +111,20 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
+      {/* Header with Logo */}
+      <div className="bg-white border-b border-gray-100 px-4 py-2">
+        <div className="flex items-center justify-center md:justify-start">
+          <img 
+            src="/thumbpop.png" 
+            alt="ThumbPop" 
+            className="h-8 w-auto mr-2"
+          />
+          <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            ThumbPop
+          </h1>
+        </div>
+      </div>
+
       {/* Enhanced Toolbar */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <EnhancedToolbar
