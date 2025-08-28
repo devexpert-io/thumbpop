@@ -14,6 +14,13 @@
 
 **No installation required!** Use ThumbPop directly in your browser with full functionality.
 
+<div align="center">
+
+![ThumbPop Interface](screenshots/hero-screenshot.png)
+*Professional YouTube thumbnail editor with AI enhancement capabilities*
+
+</div>
+
 ### 🚀 Quick Start Guide
 
 1. **🔑 Get Your API Key** (Optional)
@@ -58,6 +65,44 @@
 - **Unified Toolbar**: Streamlined editing experience
 - **Real-time Preview**: See changes instantly
 - **Professional Output**: YouTube-optimized 16:9 format
+
+---
+
+## 📸 Screenshots
+
+### 🖥️ **Desktop Experience**
+<div align="center">
+
+![Canvas Editing](screenshots/canvas-editing.png)
+*Advanced canvas editing with professional tools*
+
+</div>
+
+### 📱 **Mobile Responsive Design**
+<table>
+<tr>
+<td width="50%" align="center">
+
+![Mobile Interface](screenshots/mobile-view.png)
+*Optimized 3-row mobile toolbar*
+
+</td>
+<td width="50%" align="center">
+
+![Features Overview](screenshots/features-overview.png)
+*Rich feature set in compact interface*
+
+</td>
+</tr>
+</table>
+
+### 🤖 **AI Enhancement in Action**
+<div align="center">
+
+![AI Generation](screenshots/ai-generation.png)
+*Transform thumbnails with Gemini AI integration*
+
+</div>
 
 ---
 
