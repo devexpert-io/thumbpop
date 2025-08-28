@@ -17,7 +17,7 @@ import {
 function App() {
   const canvasRef = useRef<Canvas | null>(null);
   const [selectedObject, setSelectedObject] = useState<FabricObject | null>(null);
-  const [backgroundColor, setBackgroundColor] = useState('#1e40af');
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
   const [copiedObject, setCopiedObject] = useState<any>(null);
@@ -210,6 +210,13 @@ function App() {
           setBackgroundColor(canvas.backgroundColor as string);
         }
       }
+      
+      // Add a delayed sync to catch any timing issues
+      setTimeout(() => {
+        if (canvas.backgroundColor) {
+          setBackgroundColor(canvas.backgroundColor as string);
+        }
+      }, 100);
       
       canvas.on('selection:created', (e: any) => {
         const obj = e.selected?.[0] || null;

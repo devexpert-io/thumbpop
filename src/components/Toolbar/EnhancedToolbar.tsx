@@ -293,6 +293,7 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
             <div 
               className="w-6 h-6 rounded border border-gray-300"
               style={{ backgroundColor }}
+              title={`Background: ${backgroundColor}`}
             />
           </button>
           {showBgColorPicker && (
