@@ -68,7 +68,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         <div className="flex-1 flex flex-col bg-gray-50">
           <Toolbar
             hasSelection={!!selectedObject}
-            canPaste={true} // Always allow paste since we now support clipboard paste
+            canPaste={canPaste}
             onCopy={onCopyObject}
             onPaste={onPasteObject}
             onDelete={onDeleteObject}

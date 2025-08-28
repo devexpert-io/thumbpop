@@ -158,7 +158,12 @@ function App() {
       // Paste (Ctrl/Cmd + V)
       if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
         e.preventDefault();
-        handlePasteFromClipboard();
+        // First try internal paste, then fallback to clipboard paste
+        if (copiedObject) {
+          handlePasteObject();
+        } else {
+          handlePasteFromClipboard();
+        }
       }
       
       // Undo (Ctrl/Cmd + Z)
