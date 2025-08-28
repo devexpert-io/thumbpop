@@ -53,8 +53,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   showToast,
 }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1400);
-  const [showLeftPanel, setShowLeftPanel] = useState(true);
-  const [showRightPanel, setShowRightPanel] = useState(true);
+  const [showLeftPanel, setShowLeftPanel] = useState(() => {
+    if (window.innerWidth < 1400) return false; // Mobile default
+    const saved = localStorage.getItem('thumbnailEditor_showLeftPanel');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [showRightPanel, setShowRightPanel] = useState(() => {
+    if (window.innerWidth < 1400) return false; // Mobile default
+    const saved = localStorage.getItem('thumbnailEditor_showRightPanel');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   useEffect(() => {
     const handleResize = () => {
@@ -66,15 +74,30 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         setShowLeftPanel(false);
         setShowRightPanel(false);
       } else {
-        // Auto-show panels when switching to desktop
-        setShowLeftPanel(true);
-        setShowRightPanel(true);
+        // Restore saved panel state when switching to desktop
+        const savedLeft = localStorage.getItem('thumbnailEditor_showLeftPanel');
+        const savedRight = localStorage.getItem('thumbnailEditor_showRightPanel');
+        setShowLeftPanel(savedLeft !== null ? JSON.parse(savedLeft) : true);
+        setShowRightPanel(savedRight !== null ? JSON.parse(savedRight) : true);
       }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Persist panel visibility to localStorage (only for desktop)
+  useEffect(() => {
+    if (!isMobile) {
+      localStorage.setItem('thumbnailEditor_showLeftPanel', JSON.stringify(showLeftPanel));
+    }
+  }, [showLeftPanel, isMobile]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      localStorage.setItem('thumbnailEditor_showRightPanel', JSON.stringify(showRightPanel));
+    }
+  }, [showRightPanel, isMobile]);
 
   // Handle escape key to close modals
   useEffect(() => {
