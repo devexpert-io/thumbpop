@@ -41,5 +41,11 @@ npm test -- --coverage                               # Run tests with coverage
 ### Canvas Event Handling
 The app uses Fabric.js event system to track object selection and modifications. Canvas state is managed through refs and React state for selected objects.
 
+### State Persistence
+- **Auto-save**: Canvas state automatically saves to localStorage 1 second after changes using debounced saving
+- **Auto-restore**: Canvas state and background color are restored when the app loads
+- **Keyboard shortcuts**: Delete (Delete/Backspace), Copy (Ctrl/Cmd+C), Paste (Ctrl/Cmd+V)
+- **Toolbar actions**: Copy, paste, delete selected objects, clear entire canvas with confirmation
+
 ### API Key Management
 Gemini API keys are stored in localStorage and initialized on app load. The app shows a modal on first use to collect the API key.
