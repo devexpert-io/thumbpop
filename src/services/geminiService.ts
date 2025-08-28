@@ -20,33 +20,7 @@ class GeminiService {
     }
 
     const fullPrompt = isLucky
-      ? `You are an expert YouTube thumbnail designer. Take the following base image, which is for a video about ${videoContext}.
-
-Objective: Enhance the provided YouTube thumbnail image to dramatically increase its Click-Through Rate (CTR) while preserving its core design elements, text, and overall layout. The goal is to make it look professional, highly engaging, and visually "pop," as if meticulously refined by an expert graphic designer.
-
-Instructions for Enhancement (Apply Subtly to Dramatically, as needed):
-
-1.  Preserve All Text and Key Elements: Absolutely *do not remove or alter* any existing text, logos, or crucial graphic elements. Your task is to enhance them, not replace them.
-2.  Subject Enhancement (If applicable): If there's a main subject (person, object), subtly or dramatically enhance it to make it stand out. This can involve:
-    * Slightly increasing sharpness and detail.
-    * Adding a subtle glow or outline to make it pop from the background.
-    * Improving lighting to highlight key features.
-3.  Color & Contrast Refinement:
-    * Adjust the overall color palette to be more vibrant and appealing without changing the original hues too drastically.
-    * Boost contrast to add depth and visual impact, ensuring readability of all elements.
-    * Apply a professional color grade that makes the image feel polished and high-quality.
-4.  Lighting & Shadows:
-    * Enhance existing lighting or introduce subtle dynamic lighting to create depth and focus.
-    * Refine shadows to add drama and separate elements, without obscuring details.
-5.  Background Integration/Subtlety: If the background is complex, make sure it supports the foreground elements without distracting from them. If it's simple, subtly enhance its texture or light to add interest.
-6.  Overall Polish & Impact:
-    * Aim for a "clean but impactful" aesthetic. The image should feel professional and intentional.
-    * Consider subtle additions like cinematic light rays, dust particles, or a very slight vignette if they enhance the mood without cluttering.
-    * Ensure the final result is visually cohesive and optimized for small-screen viewing (like on a phone).
-
-Your primary directive is to elevate the existing design, making it more professional, eye-catching, and effective for YouTube, without altering its fundamental structure or content. Think of yourself as a master retoucher and enhancer, not a re-designer. Surprise me with improved clarity and impact.
-
-Return only the final image.`
+      ? `You are an expert YouTube thumbnail designer. Take the following base image, which is for a video about ${videoContext}. Your mission is to transform this image into a viral thumbnail, optimized for the highest possible CTR (Click-Through Rate). Use vibrant colors, impactful typography, dynamic compositions, and professional visual effects to make it stand out on the YouTube homepage. The result must be eye-catching, professional, and generate curiosity. Return only the final image.`
       : `You are an expert YouTube thumbnail designer. Take the following base image, which is for a video about ${videoContext}. Apply these instructions to transform it into a high-impact thumbnail: ${userPrompt}. Return only the final image.`;
 
     try {
