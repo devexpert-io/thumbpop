@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, FabricObject, FabricImage, IText } from 'fabric';
-import AppLayout from './components/Layout/AppLayout';
+import UnifiedLayout from './components/Layout/UnifiedLayout';
 import geminiService from './services/geminiService';
 import backgroundRemovalService from './services/backgroundRemoval';
 import ToastContainer, { ToastType } from './components/Toast/ToastContainer';
@@ -625,7 +625,7 @@ function App() {
 
   return (
     <>
-      <AppLayout
+      <UnifiedLayout
         canvasRef={canvasRef}
         selectedObject={selectedObject}
         backgroundColor={backgroundColor}
