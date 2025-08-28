@@ -202,20 +202,31 @@ function App() {
       const canvas = canvasRef.current;
       
       // Load saved state when canvas is first ready
-      const hasLoadedState = loadCanvasState(canvas);
-      if (hasLoadedState) {
-        // Update background color state to match loaded state
-        if (canvas.backgroundColor) {
-          setBackgroundColor(canvas.backgroundColor as string);
+      const loadStateWithRetry = () => {
+        const hasLoadedState = loadCanvasState(canvas);
+        if (hasLoadedState) {
+          // Update background color state to match loaded state
+          setTimeout(() => {
+            if (canvas.backgroundColor) {
+              setBackgroundColor(canvas.backgroundColor as string);
+            }
+          }, 100);
+        } else {
+          // If canvas wasn't ready, try again after a short delay
+          setTimeout(() => {
+            const retryLoaded = loadCanvasState(canvas);
+            if (retryLoaded) {
+              setTimeout(() => {
+                if (canvas.backgroundColor) {
+                  setBackgroundColor(canvas.backgroundColor as string);
+                }
+              }, 100);
+            }
+          }, 200);
         }
-      }
-      
-      // Add a delayed sync to catch any timing issues
-      setTimeout(() => {
-        if (canvas.backgroundColor) {
-          setBackgroundColor(canvas.backgroundColor as string);
-        }
-      }, 100);
+      };
+
+      loadStateWithRetry();
       
       canvas.on('selection:created', (e: any) => {
         const obj = e.selected?.[0] || null;
@@ -566,24 +577,37 @@ function App() {
   const confirmClearCanvas = () => {
     if (!canvasRef.current) return;
     
-    // Validate canvas is properly initialized
-    if (!canvasRef.current.getContext || !canvasRef.current.getContext()) {
+    // More comprehensive canvas validation
+    const canvas = canvasRef.current;
+    const canvasEl = canvas.getElement();
+    if (!canvasEl || !canvasEl.getContext || !canvasEl.getContext('2d')) {
       showToast('Canvas is not ready. Please try again.', 'error');
+      return;
+    }
+
+    // Check if Fabric canvas is properly initialized
+    if (!canvas.contextContainer || !canvas.contextTop) {
+      showToast('Canvas is not fully initialized. Please try again.', 'error');
       return;
     }
     
     try {
-      // Clear all objects but preserve background color
-      const bgColor = canvasRef.current.backgroundColor;
-      canvasRef.current.clear();
-      canvasRef.current.backgroundColor = bgColor;
-      canvasRef.current.renderAll();
+      // Clear all objects but preserve background color using safer method
+      const bgColor = canvas.backgroundColor;
+      
+      // Use safer clearing: remove all objects instead of clear()
+      const objects = canvas.getObjects();
+      objects.forEach(obj => canvas.remove(obj));
+      canvas.discardActiveObject();
+      
+      canvas.backgroundColor = bgColor;
+      canvas.renderAll();
       
       setSelectedObject(null);
       setShowClearDialog(false);
       
       // Save immediately after clearing
-      saveCanvasState(canvasRef.current);
+      saveCanvasState(canvas);
     } catch (error) {
       console.error('Error clearing canvas:', error);
       showToast('Failed to clear canvas', 'error');

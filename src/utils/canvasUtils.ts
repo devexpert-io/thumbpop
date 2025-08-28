@@ -84,17 +84,34 @@ export const replaceCanvasWithImage = async (
   canvas: Canvas,
   imageUrl: string
 ) => {
-  // Validate canvas is properly initialized
-  if (!canvas || !canvas.getContext || !canvas.getContext()) {
-    throw new Error('Canvas is not properly initialized');
+  // More comprehensive canvas validation
+  if (!canvas) {
+    throw new Error('Canvas is null or undefined');
+  }
+
+  // Check if canvas has proper context and DOM element
+  const canvasEl = canvas.getElement();
+  if (!canvasEl || !canvasEl.getContext || !canvasEl.getContext('2d')) {
+    throw new Error('Canvas context is not available');
+  }
+
+  // Check if Fabric canvas is properly initialized
+  if (!canvas.contextContainer || !canvas.contextTop) {
+    throw new Error('Fabric canvas contexts are not initialized');
   }
 
   try {
     // Save the background color before clearing
     const bgColor = canvas.backgroundColor;
-    canvas.clear();
+    
+    // Use a safer clearing method: remove all objects instead of clear()
+    const objects = canvas.getObjects();
+    objects.forEach(obj => canvas.remove(obj));
+    canvas.discardActiveObject();
+    
     // Restore the background color
     canvas.backgroundColor = bgColor;
+    canvas.renderAll();
   } catch (error) {
     console.error('Error clearing canvas in replaceCanvasWithImage:', error);
     throw new Error('Failed to clear canvas for image replacement');
@@ -134,6 +151,18 @@ export const saveCanvasState = (canvas: Canvas): void => {
 
 export const loadCanvasState = (canvas: Canvas): boolean => {
   try {
+    // Check if canvas is fully initialized before proceeding
+    if (!canvas || !canvas.getElement || !canvas.contextContainer || !canvas.contextTop) {
+      console.warn('Canvas not fully initialized, delaying state load');
+      return false;
+    }
+
+    const canvasEl = canvas.getElement();
+    if (!canvasEl || !canvasEl.getContext || !canvasEl.getContext('2d')) {
+      console.warn('Canvas context not ready, delaying state load');
+      return false;
+    }
+
     const savedData = localStorage.getItem('thumbnail_pro_canvas');
     if (!savedData) return false;
     
@@ -147,6 +176,8 @@ export const loadCanvasState = (canvas: Canvas): boolean => {
         canvas.backgroundColor = canvasData.backgroundColor;
       }
       canvas.renderAll();
+    }).catch((error) => {
+      console.warn('Failed to load canvas from JSON:', error);
     });
     
     return true;
