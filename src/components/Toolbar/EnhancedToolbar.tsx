@@ -28,6 +28,7 @@ interface EnhancedToolbarProps {
   canUndo: boolean;
   canRedo: boolean;
   onDownload: () => void;
+  onEditApiKey: () => void;
 }
 
 const fonts = [
@@ -58,6 +59,7 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
   canUndo,
   canRedo,
   onDownload,
+  onEditApiKey,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showBgColorPicker, setShowBgColorPicker] = useState(false);
@@ -212,6 +214,7 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
         canUndo={canUndo}
         canRedo={canRedo}
         onDownload={onDownload}
+        onEditApiKey={onEditApiKey}
       />
     );
   }

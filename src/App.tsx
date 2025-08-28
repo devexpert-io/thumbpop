@@ -433,7 +433,21 @@ function App() {
     } catch (error: any) {
       // Re-enable history tracking even if there's an error
       isRestoringHistoryRef.current = false;
-      showToast(error.message, 'error');
+      
+      // Check if it's an API key related error and show the modal again
+      if (error.message && (
+        error.message.includes('API_KEY_INVALID') || 
+        error.message.includes('Invalid API key') ||
+        error.message.includes('API key not valid') ||
+        error.status === 400 ||
+        error.status === 401 ||
+        error.status === 403
+      )) {
+        showToast('Invalid API key. Please enter a valid Gemini API key.', 'error');
+        setShowApiKeyModal(true);
+      } else {
+        showToast(error.message, 'error');
+      }
     }
   };
 
@@ -465,7 +479,21 @@ function App() {
     } catch (error: any) {
       // Re-enable history tracking even if there's an error
       isRestoringHistoryRef.current = false;
-      showToast(error.message, 'error');
+      
+      // Check if it's an API key related error and show the modal again
+      if (error.message && (
+        error.message.includes('API_KEY_INVALID') || 
+        error.message.includes('Invalid API key') ||
+        error.message.includes('API key not valid') ||
+        error.status === 400 ||
+        error.status === 401 ||
+        error.status === 403
+      )) {
+        showToast('Invalid API key. Please enter a valid Gemini API key.', 'error');
+        setShowApiKeyModal(true);
+      } else {
+        showToast(error.message, 'error');
+      }
     }
   };
 
@@ -643,6 +671,7 @@ function App() {
         onClearCanvas={handleClearCanvas}
         onAIGenerate={handleAIGenerate}
         onLuckyGenerate={handleLuckyGenerate}
+        onEditApiKey={() => setShowApiKeyModal(true)}
         onDownload={handleDownload}
         onUndo={handleUndo}
         onRedo={handleRedo}

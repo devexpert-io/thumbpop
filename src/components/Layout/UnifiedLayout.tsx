@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ThumbnailCanvas from '../Canvas/ThumbnailCanvas';
 import EnhancedToolbar from '../Toolbar/EnhancedToolbar';
 import { FabricObject } from 'fabric';
-import { Sparkles, Wand2, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { Sparkles, Wand2, ChevronDown, ChevronUp, Info, Settings } from 'lucide-react';
 
 interface UnifiedLayoutProps {
   canvasRef: React.RefObject<any>;
@@ -20,6 +20,7 @@ interface UnifiedLayoutProps {
   onClearCanvas: () => void;
   onAIGenerate: (videoContext: string, prompt: string) => void;
   onLuckyGenerate: (videoContext: string) => void;
+  onEditApiKey: () => void;
   onDownload: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -44,6 +45,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
   onClearCanvas,
   onAIGenerate,
   onLuckyGenerate,
+  onEditApiKey,
   onDownload,
   onUndo,
   onRedo,
@@ -132,6 +134,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
           canUndo={canUndo}
           canRedo={canRedo}
           onDownload={onDownload}
+          onEditApiKey={onEditApiKey}
         />
       </div>
 
@@ -239,6 +242,15 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                       <span className="hidden sm:inline">I'm Lucky!</span>
                     </>
                   )}
+                </button>
+
+                {/* API Key Settings Button */}
+                <button
+                  onClick={onEditApiKey}
+                  className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all flex items-center justify-center"
+                  title="Edit Gemini API Key"
+                >
+                  <Settings size={18} />
                 </button>
               </div>
             </div>

@@ -27,6 +27,7 @@ interface AdvancedMobileToolbarProps {
   canUndo: boolean;
   canRedo: boolean;
   onDownload: () => void;
+  onEditApiKey: () => void;
 }
 
 const fonts = [
@@ -57,6 +58,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
   canUndo,
   canRedo,
   onDownload,
+  onEditApiKey,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -455,6 +457,15 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
             >
               <Download size={16} />
               <span className="text-sm font-medium">Save</span>
+            </button>
+
+            {/* API Key Settings */}
+            <button
+              onClick={onEditApiKey}
+              className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors flex items-center justify-center"
+              title="Edit Gemini API Key"
+            >
+              <Settings size={16} />
             </button>
           </div>
         </div>
