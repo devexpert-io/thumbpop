@@ -341,6 +341,9 @@ function App() {
     if (!canvasRef.current) return;
     
     try {
+      // Temporarily disable history tracking
+      isRestoringHistoryRef.current = true;
+      
       const canvasImage = canvasToBase64(canvasRef.current);
       const enhancedImage = await geminiService.enhanceThumbnail(
         canvasImage,
@@ -349,7 +352,13 @@ function App() {
         false
       );
       await replaceCanvasWithImage(canvasRef.current, enhancedImage);
+      
+      // Re-enable history tracking and save the new state
+      isRestoringHistoryRef.current = false;
+      saveToHistory();
     } catch (error: any) {
+      // Re-enable history tracking even if there's an error
+      isRestoringHistoryRef.current = false;
       alert(error.message);
     }
   };
@@ -358,6 +367,9 @@ function App() {
     if (!canvasRef.current) return;
     
     try {
+      // Temporarily disable history tracking
+      isRestoringHistoryRef.current = true;
+      
       const canvasImage = canvasToBase64(canvasRef.current);
       const enhancedImage = await geminiService.enhanceThumbnail(
         canvasImage,
@@ -366,7 +378,13 @@ function App() {
         true
       );
       await replaceCanvasWithImage(canvasRef.current, enhancedImage);
+      
+      // Re-enable history tracking and save the new state
+      isRestoringHistoryRef.current = false;
+      saveToHistory();
     } catch (error: any) {
+      // Re-enable history tracking even if there's an error
+      isRestoringHistoryRef.current = false;
       alert(error.message);
     }
   };
