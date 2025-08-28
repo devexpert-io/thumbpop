@@ -52,19 +52,23 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   canRedo,
   showToast,
 }) => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-  const [showLeftPanel, setShowLeftPanel] = useState(false);
-  const [showRightPanel, setShowRightPanel] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1400);
+  const [showLeftPanel, setShowLeftPanel] = useState(true);
+  const [showRightPanel, setShowRightPanel] = useState(true);
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 1024;
+      const mobile = window.innerWidth < 1400;
       setIsMobile(mobile);
       
-      // Auto-close mobile panels when switching to desktop
-      if (!mobile) {
+      // Auto-close mobile panels when switching to mobile
+      if (mobile) {
         setShowLeftPanel(false);
         setShowRightPanel(false);
+      } else {
+        // Auto-show panels when switching to desktop
+        setShowLeftPanel(true);
+        setShowRightPanel(true);
       }
     };
 
@@ -107,9 +111,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 
       {/* Main content area - responsive layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel - only visible on desktop */}
-        {!isMobile && (
-          <div className="w-80 bg-white shadow-lg overflow-y-auto">
+        {/* Left Panel - toggle on desktop, modal on mobile */}
+        {!isMobile && showLeftPanel && (
+          <div className="w-80 bg-white shadow-lg overflow-y-auto border-r border-gray-200">
             <LeftPanel
               selectedObject={selectedObject}
               backgroundColor={backgroundColor}
@@ -123,13 +127,45 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         )}
 
         {/* Canvas area - always visible */}
-        <div className="flex-1 bg-white rounded-lg shadow-2xl m-4 overflow-hidden flex items-center justify-center">
-          <ThumbnailCanvas canvasRef={canvasRef} />
+        <div className="flex-1 bg-white shadow-2xl m-4 overflow-hidden flex flex-col">
+          {/* Desktop panel toggle buttons */}
+          {!isMobile && (
+            <div className="flex justify-between items-center p-3 border-b border-gray-200 bg-gray-50">
+              <button
+                onClick={() => setShowLeftPanel(!showLeftPanel)}
+                className={`px-3 py-1.5 text-sm rounded transition-colors ${
+                  showLeftPanel
+                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                🛠️ Tools
+              </button>
+              <div className="text-sm text-gray-500 font-medium">
+                Thumbnail Editor
+              </div>
+              <button
+                onClick={() => setShowRightPanel(!showRightPanel)}
+                className={`px-3 py-1.5 text-sm rounded transition-colors ${
+                  showRightPanel
+                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                ✨ AI
+              </button>
+            </div>
+          )}
+          
+          {/* Canvas container */}
+          <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+            <ThumbnailCanvas canvasRef={canvasRef} />
+          </div>
         </div>
 
-        {/* Right Panel - only visible on desktop */}
-        {!isMobile && (
-          <div className="w-96 bg-white shadow-lg overflow-y-auto">
+        {/* Right Panel - toggle on desktop, modal on mobile */}
+        {!isMobile && showRightPanel && (
+          <div className="w-96 bg-white shadow-lg overflow-y-auto border-l border-gray-200">
             <RightPanel
               onAIGenerate={onAIGenerate}
               onLuckyGenerate={onLuckyGenerate}
