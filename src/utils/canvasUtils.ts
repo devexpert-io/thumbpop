@@ -1,4 +1,5 @@
 import { Canvas, FabricImage, IText, FabricObject } from 'fabric';
+import { loadTextProperties } from './textPropertiesUtils';
 
 export const canvasToBase64 = (canvas: Canvas): string => {
   return canvas.toDataURL({
@@ -29,17 +30,16 @@ export const addTextToCanvas = (
   text: string = 'Your Text Here',
   options?: any
 ): IText => {
+  // Load persistent text properties
+  const textProperties = loadTextProperties();
+  
   const iText = new IText(text, {
     left: canvas.width! / 2,
     top: canvas.height! / 2,
-    fontFamily: 'Impact',
-    fontSize: 48,
-    fill: '#FFFFFF',
-    stroke: '#000000',
-    strokeWidth: 2,
     originX: 'center',
     originY: 'center',
     textAlign: 'center',
+    ...textProperties,
     ...options,
   });
   

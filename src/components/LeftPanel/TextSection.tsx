@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ChromePicker } from 'react-color';
 import { Type, RotateCw } from 'lucide-react';
 import { FabricObject, IText } from 'fabric';
+import { saveTextProperties, loadTextProperties } from '../../utils/textPropertiesUtils';
 
 interface TextSectionProps {
   selectedObject: FabricObject | null;
@@ -33,6 +34,17 @@ const TextSection: React.FC<TextSectionProps> = ({
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
   const [showStrokeColorPicker, setShowStrokeColorPicker] = useState(false);
 
+  // Load saved text properties on component mount
+  useEffect(() => {
+    const savedProperties = loadTextProperties();
+    setFontFamily(savedProperties.fontFamily);
+    setFontSize(savedProperties.fontSize);
+    setTextColor(savedProperties.fill);
+    setStrokeColor(savedProperties.stroke);
+    setStrokeWidth(savedProperties.strokeWidth);
+    setRotation(savedProperties.angle);
+  }, []);
+
   useEffect(() => {
     if (selectedObject && selectedObject.type === 'i-text') {
       const text = selectedObject as IText;
@@ -51,27 +63,36 @@ const TextSection: React.FC<TextSectionProps> = ({
     
     const updates: any = { [property]: value };
     
+    // Save to persistent storage
+    saveTextProperties({ [property]: value });
+    
     switch (property) {
       case 'text':
         setTextContent(value);
         break;
       case 'fontFamily':
         setFontFamily(value);
+        saveTextProperties({ fontFamily: value });
         break;
       case 'fontSize':
         setFontSize(value);
+        saveTextProperties({ fontSize: value });
         break;
       case 'fill':
         setTextColor(value);
+        saveTextProperties({ fill: value });
         break;
       case 'stroke':
         setStrokeColor(value);
+        saveTextProperties({ stroke: value });
         break;
       case 'strokeWidth':
         setStrokeWidth(value);
+        saveTextProperties({ strokeWidth: value });
         break;
       case 'angle':
         setRotation(value);
+        saveTextProperties({ angle: value });
         break;
     }
     

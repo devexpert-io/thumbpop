@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BackgroundSection from './BackgroundSection';
 import TextSection from './TextSection';
 import ImageSection from './ImageSection';
@@ -25,6 +25,13 @@ const LeftPanel: React.FC<LeftPanelProps> = ({
   onRemoveBackground,
 }) => {
   const [expandedSection, setExpandedSection] = useState<string>('background');
+
+  // Automatically expand the Text section when a text object is selected
+  useEffect(() => {
+    if (selectedObject && selectedObject.type === 'i-text') {
+      setExpandedSection('text');
+    }
+  }, [selectedObject]);
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? '' : section);
