@@ -158,12 +158,7 @@ function App() {
       // Paste (Ctrl/Cmd + V)
       if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
         e.preventDefault();
-        // First try internal paste, then fallback to clipboard paste
-        if (copiedObject) {
-          handlePasteObject();
-        } else {
-          handlePasteFromClipboard();
-        }
+        handleSmartPaste();
       }
       
       // Undo (Ctrl/Cmd + Z)
@@ -409,7 +404,7 @@ function App() {
 
   // Handle paste from system clipboard
   const handlePasteFromClipboard = async () => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current) return false; // Return false to indicate no paste occurred
     
     try {
       // Read clipboard data
@@ -423,7 +418,7 @@ function App() {
             const imageUrl = URL.createObjectURL(blob);
             await addImageToCanvas(canvasRef.current, imageUrl);
             URL.revokeObjectURL(imageUrl); // Clean up object URL
-            return;
+            return true; // Return true to indicate successful paste
           }
         }
         
@@ -433,17 +428,30 @@ function App() {
           const text = await blob.text();
           if (text) {
             addTextToCanvas(canvasRef.current, text);
-            return;
+            return true; // Return true to indicate successful paste
           }
         }
       }
     } catch (err) {
       console.warn('Failed to read clipboard contents: ', err);
-      // Fallback to existing paste functionality
-      if (copiedObject) {
-        handlePasteObject();
-      }
+      // Don't return false here as we want to try internal paste
     }
+    
+    return false; // Return false to indicate no paste occurred
+  };
+
+  // Enhanced paste handler that intelligently chooses between clipboard and internal paste
+  const handleSmartPaste = async () => {
+    // Always try clipboard first
+    const clipboardSuccess = await handlePasteFromClipboard();
+    
+    // If clipboard paste didn't work and we have an internal copy, use that
+    if (!clipboardSuccess && copiedObject && canvasRef.current) {
+      handlePasteObject();
+      return true;
+    }
+    
+    return clipboardSuccess || !!copiedObject;
   };
 
   const handleClearCanvas = () => {
@@ -541,8 +549,8 @@ function App() {
         onRemoveBackground={handleRemoveBackground}
         onDeleteObject={handleDeleteObject}
         onCopyObject={handleCopyObject}
-        onPasteObject={handlePasteObject}
-        canPaste={!!copiedObject}
+        onPasteObject={handleSmartPaste}
+        canPaste={true}
         onClearCanvas={handleClearCanvas}
         onAIGenerate={handleAIGenerate}
         onLuckyGenerate={handleLuckyGenerate}
