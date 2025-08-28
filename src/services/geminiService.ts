@@ -20,7 +20,14 @@ class GeminiService {
     }
 
     const fullPrompt = isLucky
-      ? `You are an expert YouTube thumbnail designer. Take the following base image, which is for a video about ${videoContext}. Your mission is to transform this image into a viral thumbnail, optimized for the highest possible CTR (Click-Through Rate). Use vibrant colors, impactful typography, dynamic compositions, and professional visual effects to make it stand out on the YouTube homepage. The result must be eye-catching, professional, and generate curiosity. Return only the final image.`
+      ? `You are an expert YouTube thumbnail designer. Take the following base image, which is for a video about ${videoContext}. Your mission is to transform this image into a professional, high-impact thumbnail that will perform well on YouTube. Use the following guidelines:
+1. Maintain a professional appearance with sophisticated color palettes
+2. Use clean, readable typography with appropriate contrast
+3. Create visual hierarchy to guide the viewer's eye
+4. Apply subtle but effective visual enhancements
+5. Ensure the design is eye-catching but not overwhelming
+6. Focus on clarity and message communication
+Return only the final image.`
       : `You are an expert YouTube thumbnail designer. Take the following base image, which is for a video about ${videoContext}. Apply these instructions to transform it into a high-impact thumbnail: ${userPrompt}. Return only the final image.`;
 
     try {
