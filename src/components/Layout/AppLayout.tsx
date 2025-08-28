@@ -21,6 +21,7 @@ interface AppLayoutProps {
   onAIGenerate: (videoContext: string, prompt: string) => void;
   onLuckyGenerate: (videoContext: string) => void;
   onDownload: () => void;
+  onEditApiKey: () => void;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
@@ -45,6 +46,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onAIGenerate,
   onLuckyGenerate,
   onDownload,
+  onEditApiKey,
   onUndo,
   onRedo,
   canUndo,
@@ -121,6 +123,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           canUndo={canUndo}
           canRedo={canRedo}
           onDownload={onDownload}
+          onEditApiKey={onEditApiKey}
         />
       </div>
 
