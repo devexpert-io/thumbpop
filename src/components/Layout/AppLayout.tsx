@@ -26,6 +26,7 @@ interface AppLayoutProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  showToast: (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => void;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({
@@ -49,6 +50,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onRedo,
   canUndo,
   canRedo,
+  showToast,
 }) => {
   return (
     <div className="flex flex-col h-screen bg-gray-100">
@@ -88,6 +90,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             onAIGenerate={onAIGenerate}
             onLuckyGenerate={onLuckyGenerate}
             onDownload={onDownload}
+            showToast={showToast}
           />
         </div>
       </div>

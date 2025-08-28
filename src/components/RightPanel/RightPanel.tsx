@@ -6,12 +6,14 @@ interface RightPanelProps {
   onAIGenerate: (videoContext: string, prompt: string) => void;
   onLuckyGenerate: (videoContext: string) => void;
   onDownload: () => void;
+  showToast: (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => void;
 }
 
 const RightPanel: React.FC<RightPanelProps> = ({
   onAIGenerate,
   onLuckyGenerate,
   onDownload,
+  showToast,
 }) => {
   return (
     <div className="h-full flex flex-col">
@@ -23,6 +25,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
         <AIControls
           onAIGenerate={onAIGenerate}
           onLuckyGenerate={onLuckyGenerate}
+          showToast={showToast}
         />
       </div>
       

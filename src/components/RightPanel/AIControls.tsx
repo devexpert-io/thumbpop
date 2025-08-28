@@ -4,11 +4,13 @@ import { Sparkles, Wand2, AlertCircle } from 'lucide-react';
 interface AIControlsProps {
   onAIGenerate: (videoContext: string, prompt: string) => void;
   onLuckyGenerate: (videoContext: string) => void;
+  showToast: (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => void;
 }
 
 const AIControls: React.FC<AIControlsProps> = ({
   onAIGenerate,
   onLuckyGenerate,
+  showToast,
 }) => {
   const [videoContext, setVideoContext] = useState('');
   const [userPrompt, setUserPrompt] = useState('');
@@ -16,11 +18,11 @@ const AIControls: React.FC<AIControlsProps> = ({
 
   const handleGenerate = async () => {
     if (!videoContext.trim()) {
-      alert('Please provide video context first');
+      showToast('Please provide video context first', 'warning');
       return;
     }
     if (!userPrompt.trim()) {
-      alert('Please describe the changes you want');
+      showToast('Please describe the changes you want', 'warning');
       return;
     }
     
@@ -34,7 +36,7 @@ const AIControls: React.FC<AIControlsProps> = ({
 
   const handleLucky = async () => {
     if (!videoContext.trim()) {
-      alert('Please provide video context first');
+      showToast('Please provide video context first', 'warning');
       return;
     }
     

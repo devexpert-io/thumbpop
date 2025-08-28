@@ -81,46 +81,72 @@ Return only the final image.`
       let imageData = '';
       let hasImage = false;
       let detailedError = '';
+      let chunkCount = 0;
+      let allChunks: any[] = []; // Store all chunks for debugging
 
       for await (const chunk of response) {
-        // Log chunk for debugging
-        console.log('API Response Chunk:', JSON.stringify(chunk, null, 2));
+        chunkCount++;
+        // Store chunk for debugging
+        allChunks.push(chunk);
+        console.log(`API Response Chunk ${chunkCount}:`, JSON.stringify(chunk, null, 2));
         
         if (!chunk.candidates || chunk.candidates.length === 0) {
-          detailedError = 'No candidates in response';
+          detailedError = `No candidates in response (chunk ${chunkCount})`;
           continue;
         }
         
         const candidate = chunk.candidates[0];
         
+        // Log candidate for debugging
+        console.log(`Candidate ${chunkCount}:`, JSON.stringify(candidate, null, 2));
+        
         // Check for safety ratings or blocked content
-        if (candidate.finishReason === 'SAFETY') {
-          detailedError = 'Content was blocked due to safety concerns. Try modifying your prompt to be less sensitive.';
+        if (candidate.finishReason) {
+          console.log(`Finish reason ${chunkCount}:`, candidate.finishReason);
+          if (candidate.finishReason === 'SAFETY') {
+            detailedError = 'Content was blocked due to safety concerns. Try modifying your prompt to be less sensitive.';
+            continue;
+          }
+          if (candidate.finishReason === 'RECITATION') {
+            detailedError = 'Content was blocked due to copyright concerns.';
+            continue;
+          }
+          if (candidate.finishReason === 'PROHIBITED_CONTENT') {
+            detailedError = 'Content was blocked due to prohibited content policies. This may happen if the image or prompt contains elements that violate Google\'s policies. Try using a different image or modifying your prompt.';
+            continue;
+          }
+          if (candidate.finishReason === 'OTHER') {
+            detailedError = 'Generation was stopped for unspecified reasons. Please try again.';
+            continue;
+          }
+          if (candidate.finishReason === 'MAX_TOKENS') {
+            detailedError = 'Response exceeded maximum token limit.';
+            continue;
+          }
+        }
+        
+        if (!candidate.content) {
+          detailedError = `No content in candidate (chunk ${chunkCount})`;
           continue;
         }
         
-        if (candidate.finishReason === 'RECITATION') {
-          detailedError = 'Content was blocked due to copyright concerns.';
-          continue;
-        }
-        
-        if (candidate.finishReason === 'OTHER') {
-          detailedError = 'Generation was stopped for unspecified reasons. Please try again.';
-          continue;
-        }
-        
-        if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
-          detailedError = 'No content parts in response';
+        if (!candidate.content.parts || candidate.content.parts.length === 0) {
+          detailedError = `No content parts in response (chunk ${chunkCount})`;
           continue;
         }
         
         const part = candidate.content.parts[0];
+        
+        // Log part for debugging
+        console.log(`Part ${chunkCount}:`, JSON.stringify(part, null, 2));
         
         if ('inlineData' in part && part.inlineData) {
           imageData = part.inlineData.data || '';
           if (imageData) {
             hasImage = true;
             break;
+          } else {
+            detailedError = `Empty image data in inlineData (chunk ${chunkCount})`;
           }
         }
         
@@ -130,8 +156,15 @@ Return only the final image.`
         }
       }
 
+      // Log all chunks if we didn't get an image
       if (!hasImage || !imageData) {
-        const errorMessage = detailedError || 'No image was generated. Please try again.';
+        console.log('All API response chunks:', JSON.stringify(allChunks, null, 2));
+      }
+
+      console.log(`Total chunks processed: ${chunkCount}`);
+      
+      if (!hasImage || !imageData) {
+        const errorMessage = detailedError || `No image was generated after processing ${chunkCount} chunks. Please try again.`;
         throw new Error(errorMessage);
       }
 

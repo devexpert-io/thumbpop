@@ -3,6 +3,7 @@ import { Canvas, FabricObject, FabricImage, IText } from 'fabric';
 import AppLayout from './components/Layout/AppLayout';
 import geminiService from './services/geminiService';
 import backgroundRemovalService from './services/backgroundRemoval';
+import ToastContainer, { ToastType } from './components/Toast/ToastContainer';
 import {
   canvasToBase64,
   downloadCanvas,
@@ -23,6 +24,7 @@ function App() {
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [toasts, setToasts] = useState<ToastType[]>([]);
 
   // Undo/Redo state
   const canvasHistoryRef = useRef<string[]>([]);
@@ -36,6 +38,16 @@ function App() {
   const updateUndoRedoState = () => {
     setCanUndo(historyIndexRef.current > 0);
     setCanRedo(historyIndexRef.current < canvasHistoryRef.current.length - 1);
+  };
+
+  // Toast notification functions
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, message, type, duration }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
   // Save current canvas state to history
@@ -333,7 +345,7 @@ function App() {
       console.log('✅ Background removed successfully!');
     } catch (error: any) {
       console.error('Background removal error:', error);
-      alert(`Failed to remove background: ${error.message}`);
+      showToast(`Failed to remove background: ${error.message}`, 'error');
     }
   };
 
@@ -359,7 +371,7 @@ function App() {
     } catch (error: any) {
       // Re-enable history tracking even if there's an error
       isRestoringHistoryRef.current = false;
-      alert(error.message);
+      showToast(error.message, 'error');
     }
   };
 
@@ -385,7 +397,7 @@ function App() {
     } catch (error: any) {
       // Re-enable history tracking even if there's an error
       isRestoringHistoryRef.current = false;
-      alert(error.message);
+      showToast(error.message, 'error');
     }
   };
 
@@ -595,7 +607,10 @@ function App() {
         onRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
+        showToast={showToast}
       />
+      
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
       
       {showClearDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
