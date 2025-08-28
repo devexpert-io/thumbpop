@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ThumbnailCanvas from '../Canvas/ThumbnailCanvas';
 import EnhancedToolbar from '../Toolbar/EnhancedToolbar';
 import { FabricObject } from 'fabric';
-import { Sparkles, Wand2, ChevronDown, ChevronUp, Info, Settings } from 'lucide-react';
+import { Sparkles, Wand2, ChevronDown, ChevronUp, Info, Settings, MessageSquare } from 'lucide-react';
 
 interface UnifiedLayoutProps {
   canvasRef: React.RefObject<any>;
@@ -113,15 +113,29 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header with Logo */}
       <div className="bg-white border-b border-gray-100 px-4 py-2">
-        <div className="flex items-center justify-center md:justify-start">
-          <img 
-            src="/thumbpop.png" 
-            alt="ThumbPop" 
-            className="h-8 w-auto mr-2"
-          />
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-500 to-cyan-400 bg-clip-text text-transparent">
-            ThumbPop
-          </h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center md:justify-start">
+            <img 
+              src="/thumbpop.png" 
+              alt="ThumbPop" 
+              className="h-8 w-auto mr-2"
+            />
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-500 to-cyan-400 bg-clip-text text-transparent">
+              ThumbPop
+            </h1>
+          </div>
+          
+          {/* Feedback Button */}
+          <a
+            href="https://github.com/devexpert-io/thumbpop/issues/new"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+            title="Send feedback or report issues"
+          >
+            <MessageSquare size={16} />
+            <span className="hidden sm:inline">Feedback</span>
+          </a>
         </div>
       </div>
 
