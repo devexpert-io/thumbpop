@@ -231,9 +231,48 @@ function App() {
         debouncedSave();
       };
       
+      // Combined handler for object:modified that handles both font size sync and history
+      const modifiedHandler = (e: any) => {
+        const obj = e.target;
+        
+        // Sync font size when text is scaled using handles
+        if (obj && obj.type === 'i-text') {
+          const currentFontSize = obj.fontSize;
+          const scaleY = obj.scaleY;
+          const scaleX = obj.scaleX;
+          
+          // Calculate the actual font size after scaling
+          const actualFontSize = Math.round(currentFontSize * scaleY);
+          
+          // Only update if scale has changed (not for other modifications like position)
+          if (scaleY !== 1 || scaleX !== 1) {
+            // Reset scale and apply the new font size directly
+            obj.set({
+              fontSize: actualFontSize,
+              scaleX: 1,
+              scaleY: 1
+            });
+            
+            // Trigger re-render to update the controls
+            canvas.renderAll();
+            
+            // Force a complete re-selection to update the controls
+            canvas.discardActiveObject();
+            setTimeout(() => {
+              canvas.setActiveObject(obj);
+              canvas.renderAll();
+              setSelectedObject(obj);
+            }, 10);
+          }
+        }
+        
+        // Always save to history
+        historyHandler();
+      };
+      
       canvas.on('object:added', historyHandler);
       canvas.on('object:removed', historyHandler);
-      canvas.on('object:modified', historyHandler);
+      canvas.on('object:modified', modifiedHandler);
       canvas.on('path:created', historyHandler);
       
       // Save initial state
@@ -247,7 +286,7 @@ function App() {
         canvas.off('selection:cleared');
         canvas.off('object:added', historyHandler);
         canvas.off('object:removed', historyHandler);
-        canvas.off('object:modified', historyHandler);
+        canvas.off('object:modified', modifiedHandler);
         canvas.off('path:created', historyHandler);
       };
     };
