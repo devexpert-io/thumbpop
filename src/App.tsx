@@ -28,6 +28,7 @@ function App() {
   const canvasHistoryRef = useRef<string[]>([]);
   const historyIndexRef = useRef<number>(-1);
   const isRestoringHistoryRef = useRef<boolean>(false);
+  const hasPastedInternalRef = useRef(false); // Track if internal copy has been pasted
   
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -404,7 +405,7 @@ function App() {
 
   // Handle paste from system clipboard
   const handlePasteFromClipboard = async () => {
-    if (!canvasRef.current) return false; // Return false to indicate no paste occurred
+    if (!canvasRef.current) return false;
     
     try {
       // Read clipboard data
@@ -418,7 +419,7 @@ function App() {
             const imageUrl = URL.createObjectURL(blob);
             await addImageToCanvas(canvasRef.current, imageUrl);
             URL.revokeObjectURL(imageUrl); // Clean up object URL
-            return true; // Return true to indicate successful paste
+            return true;
           }
         }
         
@@ -428,30 +429,50 @@ function App() {
           const text = await blob.text();
           if (text) {
             addTextToCanvas(canvasRef.current, text);
-            return true; // Return true to indicate successful paste
+            return true;
           }
         }
       }
     } catch (err) {
       console.warn('Failed to read clipboard contents: ', err);
-      // Don't return false here as we want to try internal paste
     }
     
-    return false; // Return false to indicate no paste occurred
+    return false;
   };
 
-  // Enhanced paste handler that intelligently chooses between clipboard and internal paste
+  // Track if the internal copy has been used for paste
+  const hasPastedInternalRef = useRef(false);
+
+  // Enhanced paste handler with single-use internal copy
   const handleSmartPaste = async () => {
-    // Always try clipboard first
-    const clipboardSuccess = await handlePasteFromClipboard();
-    
-    // If clipboard paste didn't work and we have an internal copy, use that
-    if (!clipboardSuccess && copiedObject && canvasRef.current) {
+    // If we have an internal copy that hasn't been used yet, use it
+    if (copiedObject && !hasPastedInternalRef.current && canvasRef.current) {
       handlePasteObject();
-      return true;
+      hasPastedInternalRef.current = true; // Mark as used
+      return;
     }
     
-    return clipboardSuccess || !!copiedObject;
+    // Otherwise, try system clipboard
+    const clipboardSuccess = await handlePasteFromClipboard();
+    
+    // If clipboard paste was successful, reset the internal paste flag
+    if (clipboardSuccess) {
+      hasPastedInternalRef.current = false;
+    }
+    
+    // If neither worked, reset the internal paste flag for next time
+    if (!clipboardSuccess && !copiedObject) {
+      hasPastedInternalRef.current = false;
+    }
+  };
+
+  const handleCopyObject = () => {
+    if (!selectedObject || !canvasRef.current) return;
+    
+    selectedObject.clone().then((cloned: any) => {
+      setCopiedObject(cloned);
+      hasPastedInternalRef.current = false; // Reset paste flag when copying
+    });
   };
 
   const handleClearCanvas = () => {
