@@ -2,7 +2,7 @@
   "name": "thumbpop",
   "version": "1.0.0",
   "description": "ThumbPop - AI-Powered YouTube Thumbnail Creator",
-  "homepage": "https://github.com/devexpert-io/thumbpop",
+  "homepage": "/",
   "repository": {
     "type": "git",
     "url": "https://github.com/devexpert-io/thumbpop.git"
