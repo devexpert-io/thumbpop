@@ -119,6 +119,10 @@ export const replaceCanvasWithImage = async (
   
   const img = await loadImageFromUrl(imageUrl);
   
+  // Reset canvas panning but preserve zoom
+  const zoom = canvas.getZoom();
+  canvas.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
+  
   // Use the original canvas dimensions (1280x720), not the scaled display size
   const originalWidth = 1280;
   const originalHeight = 720;
