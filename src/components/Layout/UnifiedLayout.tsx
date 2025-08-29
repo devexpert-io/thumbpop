@@ -216,7 +216,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 flex items-center justify-center p-4 md:p-8">
           {/* Canvas Container with fixed aspect ratio */}
-          <div className="w-full max-w-6xl">
+          <div className="w-full max-w-7xl">
             <div className="bg-white rounded-lg shadow-xl overflow-hidden">
               <ThumbnailCanvas canvasRef={canvasRef} />
             </div>
