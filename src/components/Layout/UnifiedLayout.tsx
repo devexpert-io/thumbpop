@@ -116,7 +116,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center justify-center md:justify-start">
             <img 
-              src="/thumbpop.png" 
+              src={`${process.env.PUBLIC_URL}/thumbpop.png`}
               alt="ThumbPop" 
               className="h-8 w-auto mr-2"
             />
