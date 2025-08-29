@@ -74,13 +74,8 @@ class GeminiService {
       let hasImage = false;
       let detailedError = '';
       let chunkCount = 0;
-      let allChunks: any[] = []; // Store all chunks for debugging
-
       for await (const chunk of response) {
         chunkCount++;
-        // Store chunk for debugging
-        allChunks.push(chunk);
-        console.log(`API Response Chunk ${chunkCount}:`, JSON.stringify(chunk, null, 2));
         
         if (!chunk.candidates || chunk.candidates.length === 0) {
           detailedError = `No candidates in response (chunk ${chunkCount})`;
@@ -89,12 +84,9 @@ class GeminiService {
         
         const candidate = chunk.candidates[0];
         
-        // Log candidate for debugging
-        console.log(`Candidate ${chunkCount}:`, JSON.stringify(candidate, null, 2));
         
         // Check for safety ratings or blocked content
         if (candidate.finishReason) {
-          console.log(`Finish reason ${chunkCount}:`, candidate.finishReason);
           if (candidate.finishReason === 'SAFETY') {
             detailedError = 'Content was blocked due to safety concerns. Try modifying your prompt to be less sensitive.';
             continue;
@@ -129,8 +121,6 @@ class GeminiService {
         
         const part = candidate.content.parts[0];
         
-        // Log part for debugging
-        console.log(`Part ${chunkCount}:`, JSON.stringify(part, null, 2));
         
         if ('inlineData' in part && part.inlineData) {
           imageData = part.inlineData.data || '';
@@ -148,12 +138,6 @@ class GeminiService {
         }
       }
 
-      // Log all chunks if we didn't get an image
-      if (!hasImage || !imageData) {
-        console.log('All API response chunks:', JSON.stringify(allChunks, null, 2));
-      }
-
-      console.log(`Total chunks processed: ${chunkCount}`);
       
       if (!hasImage || !imageData) {
         const errorMessage = detailedError || `No image was generated after processing ${chunkCount} chunks. Please try again.`;
@@ -162,7 +146,6 @@ class GeminiService {
 
       return `data:image/png;base64,${imageData}`;
     } catch (error: any) {
-      console.error('Gemini API Error:', error);
       // Provide more context about the error
       if (error.message) {
         throw new Error(`Gemini API Error: ${error.message}`);
