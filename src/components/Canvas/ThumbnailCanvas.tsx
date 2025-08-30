@@ -1,15 +1,18 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Canvas } from 'fabric';
 
 interface ThumbnailCanvasProps {
   canvasRef: React.RefObject<Canvas | null>;
+  onDrop?: (files: File[]) => void;
 }
 
-const ThumbnailCanvas: React.FC<ThumbnailCanvasProps> = ({ canvasRef }) => {
+const ThumbnailCanvas: React.FC<ThumbnailCanvasProps> = ({ canvasRef, onDrop }) => {
   const canvasElementRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const fabricCanvasRef = useRef<Canvas | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (!canvasElementRef.current) return;
@@ -130,8 +133,58 @@ const ThumbnailCanvas: React.FC<ThumbnailCanvasProps> = ({ canvasRef }) => {
     };
   }, []);
 
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if we're leaving the container
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length > 0 && onDrop) {
+      onDrop(imageFiles);
+    }
+  };
+
   return (
-    <canvas ref={canvasElementRef} className="border-2 border-gray-300 rounded w-full h-full" />
+    <div 
+      ref={containerRef}
+      className={`relative w-full h-full flex items-center justify-center ${
+        isDragging ? 'bg-blue-50' : ''
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <canvas 
+        ref={canvasElementRef} 
+        className="border-2 border-gray-300 rounded"
+        style={{ pointerEvents: 'all' }}
+      />
+      {isDragging && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <div className="bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg">
+            Drop images here
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -218,7 +218,17 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
           {/* Canvas Container with fixed aspect ratio */}
           <div className="w-full max-w-7xl">
             <div className="bg-white rounded-lg shadow-xl overflow-hidden">
-              <ThumbnailCanvas canvasRef={canvasRef} />
+              <ThumbnailCanvas 
+                canvasRef={canvasRef} 
+                onDrop={(files) => {
+                  files.forEach(file => onImageUpload(file));
+                  if (files.length === 1) {
+                    showToast('Image added to canvas', 'success');
+                  } else {
+                    showToast(`${files.length} images added to canvas`, 'success');
+                  }
+                }}
+              />
             </div>
           </div>
         </div>
