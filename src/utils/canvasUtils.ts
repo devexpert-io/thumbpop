@@ -2,10 +2,15 @@ import { Canvas, FabricImage, IText, FabricObject } from 'fabric';
 import { loadTextProperties } from './textPropertiesUtils';
 
 export const canvasToBase64 = (canvas: Canvas): string => {
+  // Always export at the original canvas dimensions (1280x720)
+  // regardless of the current display size/zoom level
+  const currentZoom = canvas.getZoom();
+  const originalMultiplier = 1 / currentZoom;
+  
   return canvas.toDataURL({
     format: 'png',
     quality: 1,
-    multiplier: 1,
+    multiplier: originalMultiplier,
   });
 };
 
