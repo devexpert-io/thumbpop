@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, FabricObject, FabricImage, IText } from 'fabric';
+import { DIProvider } from './shared/infrastructure/di/DIContext';
+import { useEnhancement } from './features/enhancement/presentation/hooks/useEnhancement';
 import UnifiedLayout from './components/Layout/UnifiedLayout';
-import geminiService from './services/geminiService';
 import backgroundRemovalService from './services/backgroundRemoval';
 import ToastContainer, { ToastType } from './components/Toast/ToastContainer';
 import {
@@ -14,11 +15,11 @@ import {
   loadCanvasState,
 } from './utils/canvasUtils';
 
-function App() {
+function AppContent() {
+  const { enhance, initialize: initializeEnhancement, isInitialized: isEnhancementInitialized } = useEnhancement();
   const canvasRef = useRef<Canvas | null>(null);
   const [selectedObject, setSelectedObject] = useState<FabricObject | null>(null);
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
-  const [apiKey, setApiKey] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [copiedObject, setCopiedObject] = useState<any>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -135,10 +136,9 @@ function App() {
   useEffect(() => {
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) {
-      setApiKey(savedKey);
-      geminiService.initialize(savedKey);
+      initializeEnhancement(savedKey);
     }
-  }, []);
+  }, [initializeEnhancement]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -329,8 +329,7 @@ function App() {
 
   const handleApiKeySubmit = (key: string) => {
     localStorage.setItem('gemini_api_key', key);
-    setApiKey(key);
-    geminiService.initialize(key);
+    initializeEnhancement(key);
     setShowApiKeyModal(false);
   };
 
@@ -409,7 +408,7 @@ function App() {
     if (!canvasRef.current) return;
     
     // Check if API key is available
-    if (!geminiService.isInitialized()) {
+    if (!isEnhancementInitialized()) {
       setShowApiKeyModal(true);
       return;
     }
@@ -419,12 +418,12 @@ function App() {
       isRestoringHistoryRef.current = true;
       
       const canvasImage = canvasToBase64(canvasRef.current);
-      const enhancedImage = await geminiService.enhanceThumbnail(
+      const enhancedImage = await enhance({
         canvasImage,
         videoContext,
-        prompt,
-        false
-      );
+        userPrompt: prompt,
+        isLucky: false
+      });
       await replaceCanvasWithImage(canvasRef.current, enhancedImage);
       
       // Re-enable history tracking and save the new state
@@ -458,7 +457,7 @@ function App() {
     if (!canvasRef.current) return;
     
     // Check if API key is available
-    if (!geminiService.isInitialized()) {
+    if (!isEnhancementInitialized()) {
       setShowApiKeyModal(true);
       return;
     }
@@ -468,12 +467,11 @@ function App() {
       isRestoringHistoryRef.current = true;
       
       const canvasImage = canvasToBase64(canvasRef.current);
-      const enhancedImage = await geminiService.enhanceThumbnail(
+      const enhancedImage = await enhance({
         canvasImage,
         videoContext,
-        undefined,
-        true
-      );
+        isLucky: true
+      });
       await replaceCanvasWithImage(canvasRef.current, enhancedImage);
       
       // Re-enable history tracking and save the new state
@@ -768,6 +766,14 @@ function App() {
         </div>
       )}
     </>
+  );
+}
+
+function App() {
+  return (
+    <DIProvider>
+      <AppContent />
+    </DIProvider>
   );
 }
 
