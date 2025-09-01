@@ -1,780 +1,215 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Canvas, FabricObject, FabricImage, IText } from 'fabric';
-import { DIProvider } from './shared/infrastructure/di/DIContext';
-import { useEnhancement } from './features/enhancement/presentation/hooks/useEnhancement';
+import React, {useEffect, useState} from 'react';
+import {DIProvider} from './core/di/ServicesContext';
 import UnifiedLayout from './components/Layout/UnifiedLayout';
-import backgroundRemovalService from './services/backgroundRemoval';
-import ToastContainer, { ToastType } from './components/Toast/ToastContainer';
-import {
-  canvasToBase64,
-  downloadCanvas,
-  addTextToCanvas,
-  addImageToCanvas,
-  replaceCanvasWithImage,
-  saveCanvasState,
-  loadCanvasState,
-} from './utils/canvasUtils';
+import ToastContainer, {ToastType} from './components/Toast/ToastContainer';
+import {useAIGeneration} from './features/ai/hooks/useAIGeneration';
+import {useEditor} from './features/editor/hooks/useEditor';
+import {canvasToBase64} from './utils/canvasUtils';
 
 function AppContent() {
-  const { enhance, initialize: initializeEnhancement, isInitialized: isEnhancementInitialized } = useEnhancement();
-  const canvasRef = useRef<Canvas | null>(null);
-  const [selectedObject, setSelectedObject] = useState<FabricObject | null>(null);
-  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [copiedObject, setCopiedObject] = useState<any>(null);
-  const [showClearDialog, setShowClearDialog] = useState(false);
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
-  const [toasts, setToasts] = useState<ToastType[]>([]);
+    const [toasts, setToasts] = useState<ToastType[]>([]);
 
-  // Undo/Redo state
-  const canvasHistoryRef = useRef<string[]>([]);
-  const historyIndexRef = useRef<number>(-1);
-  const isRestoringHistoryRef = useRef<boolean>(false);
-  const hasPastedInternalRef = useRef(false); // Track if internal copy has been pasted
-  
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Update undo/redo button states
-  const updateUndoRedoState = () => {
-    setCanUndo(historyIndexRef.current > 0);
-    setCanRedo(historyIndexRef.current < canvasHistoryRef.current.length - 1);
-  };
-
-  // Toast notification functions
-  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => {
-    const id = Date.now().toString();
-    setToasts(prev => [...prev, { id, message, type, duration }]);
-  };
-
-  const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  };
-
-  // Save current canvas state to history
-  const saveToHistory = () => {
-    if (!canvasRef.current || isRestoringHistoryRef.current) return;
-    
-    const currentState = JSON.stringify(canvasRef.current.toJSON());
-    const bgColor = canvasRef.current.backgroundColor;
-    
-    // If we're not at the end of history, truncate future states
-    if (historyIndexRef.current < canvasHistoryRef.current.length - 1) {
-      canvasHistoryRef.current = canvasHistoryRef.current.slice(0, historyIndexRef.current + 1);
-    }
-    
-    // Add current state to history
-    canvasHistoryRef.current.push(JSON.stringify({
-      objects: currentState,
-      backgroundColor: bgColor
-    }));
-    
-    // Limit history to 50 states to prevent memory issues
-    if (canvasHistoryRef.current.length > 50) {
-      canvasHistoryRef.current.shift();
-    } else {
-      historyIndexRef.current++;
-    }
-    
-    // Update button states
-    updateUndoRedoState();
-  };
-
-  // Undo function
-  const handleUndo = () => {
-    if (!canvasRef.current || historyIndexRef.current <= 0) return;
-    
-    isRestoringHistoryRef.current = true;
-    historyIndexRef.current--;
-    
-    const prevState = JSON.parse(canvasHistoryRef.current[historyIndexRef.current]);
-    const bgColor = prevState.backgroundColor;
-    
-    canvasRef.current.loadFromJSON(prevState.objects).then(() => {
-      canvasRef.current!.backgroundColor = bgColor;
-      canvasRef.current!.renderAll();
-      isRestoringHistoryRef.current = false;
-      updateUndoRedoState();
-    });
-  };
-
-  // Redo function
-  const handleRedo = () => {
-    if (!canvasRef.current || historyIndexRef.current >= canvasHistoryRef.current.length - 1) return;
-    
-    isRestoringHistoryRef.current = true;
-    historyIndexRef.current++;
-    
-    const nextState = JSON.parse(canvasHistoryRef.current[historyIndexRef.current]);
-    const bgColor = nextState.backgroundColor;
-    
-    canvasRef.current.loadFromJSON(nextState.objects).then(() => {
-      canvasRef.current!.backgroundColor = bgColor;
-      canvasRef.current!.renderAll();
-      isRestoringHistoryRef.current = false;
-      updateUndoRedoState();
-    });
-  };
-
-  // Debounced auto-save function
-  const debouncedSave = () => {
-    if (!canvasRef.current) return;
-    
-    // Clear existing timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    
-    // Set new timeout for auto-save
-    saveTimeoutRef.current = setTimeout(() => {
-      if (canvasRef.current) {
-        saveCanvasState(canvasRef.current);
-      }
-    }, 1000); // Save 1 second after last change
-  };
-
-  useEffect(() => {
-    const savedKey = localStorage.getItem('gemini_api_key');
-    if (savedKey) {
-      initializeEnhancement(savedKey);
-    }
-  }, [initializeEnhancement]);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in an input field
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      
-      // Delete or Backspace key
-      if ((e.key === 'Delete' || e.key === 'Backspace')) {
-        if (selectedObject && canvasRef.current) {
-          e.preventDefault();
-          canvasRef.current.remove(selectedObject);
-          canvasRef.current.discardActiveObject();
-          canvasRef.current.renderAll();
-          setSelectedObject(null);
-        }
-      }
-      
-      // Copy (Ctrl/Cmd + C)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-        if (selectedObject) {
-          e.preventDefault();
-          handleCopyObject();
-        }
-      }
-      
-      // Paste (Ctrl/Cmd + V)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-        e.preventDefault();
-        handleSmartPaste();
-      }
-      
-      // Undo (Ctrl/Cmd + Z)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        handleUndo();
-      }
-      
-      // Redo (Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y)
-      if ((e.ctrlKey || e.metaKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
-        e.preventDefault();
-        handleRedo();
-      }
+    const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => {
+        const id = Date.now().toString();
+        setToasts(prev => [...prev, { id, message, type, duration }]);
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+    const removeToast = (id: string) => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
     };
-  }, [selectedObject, copiedObject]);
 
-  useEffect(() => {
-    const setupCanvasEvents = () => {
-      if (!canvasRef.current) {
-        return;
-      }
-      
-      const canvas = canvasRef.current;
-      
-      // Load saved state when canvas is first ready
-      const loadStateWithRetry = () => {
-        const hasLoadedState = loadCanvasState(canvas);
-        if (hasLoadedState) {
-          // Update background color state to match loaded state
-          setTimeout(() => {
-            if (canvas.backgroundColor) {
-              setBackgroundColor(canvas.backgroundColor as string);
+    const {
+        canvasRef,
+        selectedObject,
+        backgroundColor,
+        copiedObject,
+        handleBackgroundColorChange,
+        handleAddText,
+        handleUpdateText,
+        handleImageUpload,
+        handleRemoveBackground,
+        handleDeleteObject,
+        handleCopyObject,
+        handleSmartPaste,
+        handleClearCanvas,
+        handleDownload,
+        showClearDialog,
+        confirmClearCanvas,
+        cancelClearCanvas,
+        showApiKeyModal,
+        handleApiKeySubmit,
+        setShowApiKeyModal,
+        handleReplaceCanvasImage,
+        handleUndo,
+        handleRedo,
+        canUndo,
+        canRedo,
+        saveToHistory,
+    } = useEditor({ showToast });
+
+    const {
+        isLoading: isAILoading,
+        enhance,
+        initialize: initializeAI,
+    } = useAIGeneration();
+
+    useEffect(() => {
+        const savedKey = localStorage.getItem('gemini_api_key');
+        if (savedKey) {
+            initializeAI(savedKey);
+        }
+    }, [initializeAI]);
+
+    const handleAIGenerate = async (videoContext: string, prompt: string) => {
+        if (!canvasRef.current) return;
+        try {
+            const canvasImage = canvasToBase64(canvasRef.current);
+            const enhancedImage = await enhance({ canvasImage, videoContext, userPrompt: prompt });
+            handleReplaceCanvasImage(enhancedImage);
+            saveToHistory();
+            showToast('AI enhancement applied!', 'success');
+        } catch (error: any) {
+            showToast(error.message, 'error');
+            if (error.message.includes('API key')) {
+                setShowApiKeyModal(true);
             }
-          }, 100);
-        } else {
-          // If canvas wasn't ready, try again after a short delay
-          setTimeout(() => {
-            const retryLoaded = loadCanvasState(canvas);
-            if (retryLoaded) {
-              setTimeout(() => {
-                if (canvas.backgroundColor) {
-                  setBackgroundColor(canvas.backgroundColor as string);
-                }
-              }, 100);
+        }
+    };
+
+    const handleLuckyGenerate = async (videoContext: string) => {
+        if (!canvasRef.current) return;
+        try {
+            const canvasImage = canvasToBase64(canvasRef.current);
+            const enhancedImage = await enhance({ canvasImage, videoContext, isLucky: true });
+            handleReplaceCanvasImage(enhancedImage);
+            saveToHistory();
+            showToast('Lucky enhancement applied!', 'success');
+        } catch (error: any) {
+            showToast(error.message, 'error');
+            if (error.message.includes('API key')) {
+                setShowApiKeyModal(true);
             }
-          }, 200);
         }
-      };
-
-      loadStateWithRetry();
-      
-      canvas.on('selection:created', (e: any) => {
-        const obj = e.selected?.[0] || null;
-        setSelectedObject(obj);
-      });
-      
-      canvas.on('selection:updated', (e: any) => {
-        const obj = e.selected?.[0] || null;
-        setSelectedObject(obj);
-      });
-      
-      canvas.on('selection:cleared', () => {
-        setSelectedObject(null);
-      });
-      
-      // Save to history on canvas changes
-      const historyHandler = () => {
-        saveToHistory();
-        debouncedSave();
-      };
-      
-      // Combined handler for object:modified that handles both font size sync and history
-      const modifiedHandler = (e: any) => {
-        const obj = e.target;
-        
-        // Sync font size when text is scaled using handles
-        if (obj && obj.type === 'i-text') {
-          const currentFontSize = obj.fontSize;
-          const scaleY = obj.scaleY;
-          const scaleX = obj.scaleX;
-          
-          // Calculate the actual font size after scaling
-          const actualFontSize = Math.round(currentFontSize * scaleY);
-          
-          // Only update if scale has changed (not for other modifications like position)
-          if (scaleY !== 1 || scaleX !== 1) {
-            // Reset scale and apply the new font size directly
-            obj.set({
-              fontSize: actualFontSize,
-              scaleX: 1,
-              scaleY: 1
-            });
-            
-            // Trigger re-render to update the controls
-            canvas.renderAll();
-            
-            // Force a complete re-selection to update the controls
-            canvas.discardActiveObject();
-            setTimeout(() => {
-              canvas.setActiveObject(obj);
-              canvas.renderAll();
-              setSelectedObject(obj);
-            }, 10);
-          }
-        }
-        
-        // Always save to history
-        historyHandler();
-      };
-      
-      canvas.on('object:added', historyHandler);
-      canvas.on('object:removed', historyHandler);
-      canvas.on('object:modified', modifiedHandler);
-      canvas.on('path:created', historyHandler);
-      
-      // Save initial state
-      setTimeout(() => {
-        saveToHistory();
-      }, 100);
-      
-      return () => {
-        canvas.off('selection:created');
-        canvas.off('selection:updated');
-        canvas.off('selection:cleared');
-        canvas.off('object:added', historyHandler);
-        canvas.off('object:removed', historyHandler);
-        canvas.off('object:modified', modifiedHandler);
-        canvas.off('path:created', historyHandler);
-      };
     };
-    
-    // Try immediately
-    const cleanup = setupCanvasEvents();
-    
-    // Also try after a short delay to ensure canvas is ready
-    const timer = setTimeout(() => {
-      setupCanvasEvents();
-    }, 500);
-    
-    return () => {
-      clearTimeout(timer);
-      cleanup?.();
-      // Cleanup auto-save timeout
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, []);
-  
 
-  const handleApiKeySubmit = (key: string) => {
-    localStorage.setItem('gemini_api_key', key);
-    initializeEnhancement(key);
-    setShowApiKeyModal(false);
-  };
-
-  const handleBackgroundColorChange = (color: string) => {
-    setBackgroundColor(color);
-    if (canvasRef.current) {
-      canvasRef.current.backgroundColor = color;
-      canvasRef.current.renderAll();
-      saveToHistory(); // Save to history when background color changes
-      debouncedSave(); // Auto-save background color changes
-    }
-  };
-
-  const handleAddText = () => {
-    if (!canvasRef.current) return;
-    addTextToCanvas(canvasRef.current);
-  };
-
-  const handleUpdateText = (options: any) => {
-    if (!selectedObject || !canvasRef.current) return;
-    selectedObject.set(options);
-    canvasRef.current.renderAll();
-  };
-
-  const handleImageUpload = async (file: File) => {
-    if (!canvasRef.current) return;
-    
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const imageUrl = e.target?.result as string;
-      await addImageToCanvas(canvasRef.current!, imageUrl);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemoveBackground = async () => {
-    if (!selectedObject || (selectedObject.type !== 'image' && (selectedObject as any).type !== 'Image') || !canvasRef.current) return;
-    
-    const image = selectedObject as FabricImage;
-    const imageUrl = image.getSrc();
-    
-    try {
-      console.log('Starting background removal...');
-      const startTime = performance.now();
-      
-      const processedImageUrl = await backgroundRemovalService.removeBackground(imageUrl);
-      
-      const endTime = performance.now();
-      console.log(`Background removed in ${((endTime - startTime) / 1000).toFixed(2)} seconds`);
-      
-      await FabricImage.fromURL(processedImageUrl).then((newImg) => {
-        newImg.set({
-          left: image.left,
-          top: image.top,
-          scaleX: image.scaleX,
-          scaleY: image.scaleY,
-          angle: image.angle,
-        });
-        
-        canvasRef.current?.remove(image);
-        canvasRef.current?.add(newImg);
-        canvasRef.current?.setActiveObject(newImg);
-        canvasRef.current?.renderAll();
-        setSelectedObject(newImg);
-      });
-      
-      // Success feedback
-      console.log('✅ Background removed successfully!');
-    } catch (error: any) {
-      console.error('Background removal error:', error);
-      showToast(`Failed to remove background: ${error.message}`, 'error');
-    }
-  };
-
-  const handleAIGenerate = async (videoContext: string, prompt: string) => {
-    if (!canvasRef.current) return;
-    
-    // Check if API key is available
-    if (!isEnhancementInitialized()) {
-      setShowApiKeyModal(true);
-      return;
-    }
-    
-    try {
-      // Temporarily disable history tracking
-      isRestoringHistoryRef.current = true;
-      
-      const canvasImage = canvasToBase64(canvasRef.current);
-      const enhancedImage = await enhance({
-        canvasImage,
-        videoContext,
-        userPrompt: prompt,
-        isLucky: false
-      });
-      await replaceCanvasWithImage(canvasRef.current, enhancedImage);
-      
-      // Re-enable history tracking and save the new state
-      isRestoringHistoryRef.current = false;
-      saveToHistory();
-    } catch (error: any) {
-      // Re-enable history tracking even if there's an error
-      isRestoringHistoryRef.current = false;
-      
-      // Check if it's an API key related error and show the modal again
-      if (error.message && (
-        error.message.includes('API_KEY_INVALID') || 
-        error.message.includes('Invalid API key') ||
-        error.message.includes('API key not valid') ||
-        error.status === 400 ||
-        error.status === 401 ||
-        error.status === 403
-      )) {
-        showToast('Invalid API key. Please enter a valid Gemini API key.', 'error');
-        setShowApiKeyModal(true);
-      } else {
-        showToast(error.message, 'error');
-      }
-      
-      // Re-throw the error so calling components know the operation failed
-      throw error;
-    }
-  };
-
-  const handleLuckyGenerate = async (videoContext: string) => {
-    if (!canvasRef.current) return;
-    
-    // Check if API key is available
-    if (!isEnhancementInitialized()) {
-      setShowApiKeyModal(true);
-      return;
-    }
-    
-    try {
-      // Temporarily disable history tracking
-      isRestoringHistoryRef.current = true;
-      
-      const canvasImage = canvasToBase64(canvasRef.current);
-      const enhancedImage = await enhance({
-        canvasImage,
-        videoContext,
-        isLucky: true
-      });
-      await replaceCanvasWithImage(canvasRef.current, enhancedImage);
-      
-      // Re-enable history tracking and save the new state
-      isRestoringHistoryRef.current = false;
-      saveToHistory();
-    } catch (error: any) {
-      // Re-enable history tracking even if there's an error
-      isRestoringHistoryRef.current = false;
-      
-      // Check if it's an API key related error and show the modal again
-      if (error.message && (
-        error.message.includes('API_KEY_INVALID') || 
-        error.message.includes('Invalid API key') ||
-        error.message.includes('API key not valid') ||
-        error.status === 400 ||
-        error.status === 401 ||
-        error.status === 403
-      )) {
-        showToast('Invalid API key. Please enter a valid Gemini API key.', 'error');
-        setShowApiKeyModal(true);
-      } else {
-        showToast(error.message, 'error');
-      }
-      
-      // Re-throw the error so calling components know the operation failed
-      throw error;
-    }
-  };
-
-  const handleDeleteObject = () => {
-    if (!selectedObject || !canvasRef.current) return;
-    
-    canvasRef.current.remove(selectedObject);
-    canvasRef.current.discardActiveObject();
-    canvasRef.current.renderAll();
-    setSelectedObject(null);
-  };
-
-  const handlePasteObject = () => {
-    if (!copiedObject || !canvasRef.current) return;
-    
-    copiedObject.clone().then((cloned: any) => {
-      cloned.set({
-        left: cloned.left + 10,
-        top: cloned.top + 10,
-      });
-      canvasRef.current?.add(cloned);
-      canvasRef.current?.setActiveObject(cloned);
-      canvasRef.current?.renderAll();
-      setSelectedObject(cloned);
-    });
-  };
-
-  // Handle paste from system clipboard
-  const handlePasteFromClipboard = async () => {
-    if (!canvasRef.current) return false;
-    
-    try {
-      // Read clipboard data
-      const clipboardItems = await navigator.clipboard.read();
-      
-      for (const clipboardItem of clipboardItems) {
-        // Check for image data
-        for (const type of clipboardItem.types) {
-          if (type.startsWith('image/')) {
-            const blob = await clipboardItem.getType(type);
-            // Convert blob to data URL instead of using object URL to avoid Fabric.js errors
-            const reader = new FileReader();
-            reader.onload = async () => {
-              const dataUrl = reader.result as string;
-              await addImageToCanvas(canvasRef.current!, dataUrl);
-            };
-            reader.readAsDataURL(blob);
-            return true;
-          }
-        }
-        
-        // Check for text data
-        if (clipboardItem.types.includes('text/plain')) {
-          const blob = await clipboardItem.getType('text/plain');
-          const text = await blob.text();
-          if (text) {
-            addTextToCanvas(canvasRef.current, text);
-            return true;
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to read clipboard contents: ', err);
-    }
-    
-    return false;
-  };
-
-  // Track if the internal copy has been used for paste
-
-  // Enhanced paste handler with single-use internal copy
-
-  // Enhanced paste handler with single-use internal copy
-  const handleSmartPaste = async () => {
-    // If we have an internal copy that hasn't been used yet, use it
-    if (copiedObject && !hasPastedInternalRef.current && canvasRef.current) {
-      handlePasteObject();
-      hasPastedInternalRef.current = true; // Mark as used
-      return;
-    }
-    
-    // Otherwise, try system clipboard
-    const clipboardSuccess = await handlePasteFromClipboard();
-    
-    // If clipboard paste was successful, reset the internal paste flag
-    if (clipboardSuccess) {
-      hasPastedInternalRef.current = false;
-    }
-    
-    // If neither worked, reset the internal paste flag for next time
-    if (!clipboardSuccess && !copiedObject) {
-      hasPastedInternalRef.current = false;
-    }
-  };
-
-  const handleCopyObject = () => {
-    if (!selectedObject || !canvasRef.current) return;
-    
-    selectedObject.clone().then((cloned: any) => {
-      setCopiedObject(cloned);
-      hasPastedInternalRef.current = false; // Reset paste flag when copying
-    });
-  };
-
-  const handleClearCanvas = () => {
-    setShowClearDialog(true);
-  };
-
-  const confirmClearCanvas = () => {
-    if (!canvasRef.current) return;
-    
-    // More comprehensive canvas validation
-    const canvas = canvasRef.current;
-    const canvasEl = canvas.getElement();
-    if (!canvasEl || !canvasEl.getContext || !canvasEl.getContext('2d')) {
-      showToast('Canvas is not ready. Please try again.', 'error');
-      return;
-    }
-
-    // Check if Fabric canvas is properly initialized
-    if (!canvas.contextContainer || !canvas.contextTop) {
-      showToast('Canvas is not fully initialized. Please try again.', 'error');
-      return;
-    }
-    
-    try {
-      // Clear all objects but preserve background color using safer method
-      const bgColor = canvas.backgroundColor;
-      
-      // Use safer clearing: remove all objects instead of clear()
-      const objects = canvas.getObjects();
-      objects.forEach(obj => canvas.remove(obj));
-      canvas.discardActiveObject();
-      
-      canvas.backgroundColor = bgColor;
-      canvas.renderAll();
-      
-      setSelectedObject(null);
-      setShowClearDialog(false);
-      
-      // Save immediately after clearing
-      saveCanvasState(canvas);
-    } catch (error) {
-      console.error('Error clearing canvas:', error);
-      showToast('Failed to clear canvas', 'error');
-      setShowClearDialog(false);
-    }
-  };
-
-  const cancelClearCanvas = () => {
-    setShowClearDialog(false);
-  };
-
-  const handleDownload = () => {
-    if (!canvasRef.current) return;
-    downloadCanvas(canvasRef.current);
-  };
-
-
-  return (
-    <>
-      <UnifiedLayout
-        canvasRef={canvasRef}
-        selectedObject={selectedObject}
-        backgroundColor={backgroundColor}
-        onBackgroundColorChange={handleBackgroundColorChange}
-        onAddText={handleAddText}
-        onUpdateText={handleUpdateText}
-        onImageUpload={handleImageUpload}
-        onRemoveBackground={handleRemoveBackground}
-        onDeleteObject={handleDeleteObject}
-        onCopyObject={handleCopyObject}
-        onPasteObject={handleSmartPaste}
-        canPaste={true}
-        onClearCanvas={handleClearCanvas}
-        onAIGenerate={handleAIGenerate}
-        onLuckyGenerate={handleLuckyGenerate}
-        onEditApiKey={() => setShowApiKeyModal(true)}
-        onDownload={handleDownload}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        showToast={showToast}
-      />
-      
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
-      
-      {/* API Key Modal */}
-      {showApiKeyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold mb-4">🤖 AI Features Require API Key</h2>
-            <p className="text-gray-600 mb-4">
-              To use AI enhancement features, you'll need a Gemini API key. This enables advanced thumbnail generation and optimization.
-            </p>
-            <p className="text-sm text-gray-500 mb-4">
-              Get your free API key from{' '}
-              <a
-                href="https://aistudio.google.com/app/apikey"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                Google AI Studio
-              </a>
-            </p>
-            <input
-              type="password"
-              placeholder="Enter your Gemini API key"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && e.currentTarget.value) {
-                  handleApiKeySubmit(e.currentTarget.value);
-                }
-              }}
-              autoFocus
+    return (
+        <>
+            <UnifiedLayout
+                canvasRef={canvasRef}
+                selectedObject={selectedObject}
+                backgroundColor={backgroundColor}
+                onBackgroundColorChange={handleBackgroundColorChange}
+                onAddText={handleAddText}
+                onUpdateText={handleUpdateText}
+                onImageUpload={handleImageUpload}
+                onRemoveBackground={handleRemoveBackground}
+                onDeleteObject={handleDeleteObject}
+                onCopyObject={handleCopyObject}
+                onPasteObject={handleSmartPaste}
+                canPaste={!!copiedObject}
+                onClearCanvas={handleClearCanvas}
+                onAIGenerate={handleAIGenerate}
+                onLuckyGenerate={handleLuckyGenerate}
+                onEditApiKey={() => setShowApiKeyModal(true)}
+                onDownload={handleDownload}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                showToast={showToast}
+                isLoadingAI={isAILoading}
             />
-            <div className="flex space-x-3">
-              <button
-                onClick={() => {
-                  const input = document.querySelector('input[type="password"]') as HTMLInputElement;
-                  if (input?.value) {
-                    handleApiKeySubmit(input.value);
-                  }
-                }}
-                className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Save & Continue
-              </button>
-              <button
-                onClick={() => setShowApiKeyModal(false)}
-                className="flex-1 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {showClearDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Clear Canvas
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to clear the canvas? This will remove all objects and cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={cancelClearCanvas}
-                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmClearCanvas}
-                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
-              >
-                Clear Canvas
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
+
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+            {showApiKeyModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                        <h2 className="text-2xl font-bold mb-4">🤖 AI Features Require API Key</h2>
+                        <p className="text-gray-600 mb-4">
+                            To use AI enhancement features, you'll need a Gemini API key. This enables advanced thumbnail generation and optimization.
+                        </p>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Get your free API key from{' '}
+                            <a
+                                href="https://aistudio.google.com/app/apikey"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                            >
+                                Google AI Studio
+                            </a>
+                        </p>
+                        <input
+                            type="password"
+                            placeholder="Enter your Gemini API key"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && e.currentTarget.value) {
+                                    handleApiKeySubmit(e.currentTarget.value);
+                                }
+                            }}
+                            autoFocus
+                        />
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={() => {
+                                    const input = document.querySelector('input[type="password"]') as HTMLInputElement;
+                                    if (input?.value) {
+                                        handleApiKeySubmit(input.value);
+                                    }
+                                }}
+                                className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                            >
+                                Save & Continue
+                            </button>
+                            <button
+                                onClick={() => setShowApiKeyModal(false)}
+                                className="flex-1 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showClearDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Clear Canvas
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                            Are you sure you want to clear the canvas? This will remove all objects and cannot be undone.
+                        </p>
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={cancelClearCanvas}
+                                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmClearCanvas}
+                                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                            >
+                                Clear Canvas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
 }
 
 function App() {
-  return (
-    <DIProvider>
-      <AppContent />
-    </DIProvider>
-  );
+    return (
+        <DIProvider>
+            <AppContent />
+        </DIProvider>
+    );
 }
 
 export default App;
