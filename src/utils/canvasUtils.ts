@@ -147,8 +147,9 @@ export const replaceCanvasWithImage = async (
 
 export const saveCanvasState = (canvas: Canvas): void => {
   try {
+    const canvasJSON = canvas.toJSON();
     const canvasData = {
-      objects: canvas.toJSON(),
+      objects: canvasJSON,
       backgroundColor: canvas.backgroundColor,
       timestamp: Date.now(),
     };
@@ -158,7 +159,15 @@ export const saveCanvasState = (canvas: Canvas): void => {
   }
 };
 
-export const loadCanvasState = (canvas: Canvas): boolean => {
+export const clearCanvasState = (): void => {
+  try {
+    localStorage.removeItem('thumbpop_canvas');
+  } catch (error) {
+    console.warn('Failed to clear canvas state from localStorage:', error);
+  }
+};
+
+export const loadCanvasState = async (canvas: Canvas): Promise<boolean> => {
   try {
     // Check if canvas is fully initialized before proceeding
     if (!canvas || !canvas.getElement || !canvas.contextContainer || !canvas.contextTop) {
@@ -179,15 +188,13 @@ export const loadCanvasState = (canvas: Canvas): boolean => {
     if (!canvasData.objects) return false;
     
     // Load the canvas data
-    canvas.loadFromJSON(canvasData.objects).then(() => {
-      // Restore background color if saved
-      if (canvasData.backgroundColor) {
-        canvas.backgroundColor = canvasData.backgroundColor;
-      }
-      canvas.renderAll();
-    }).catch((error) => {
-      console.warn('Failed to load canvas from JSON:', error);
-    });
+    await canvas.loadFromJSON(canvasData.objects);
+    
+    // Restore background color if saved
+    if (canvasData.backgroundColor) {
+      canvas.backgroundColor = canvasData.backgroundColor;
+    }
+    canvas.renderAll();
     
     return true;
   } catch (error) {

@@ -6,6 +6,7 @@ import {
     addImageToCanvas,
     saveCanvasState,
     loadCanvasState,
+    clearCanvasState,
     replaceCanvasWithImage,
 } from '../../../utils/canvasUtils';
 import backgroundRemovalService from '../../../services/backgroundRemoval';
@@ -39,21 +40,32 @@ export function useEditor({ showToast }: UseEditorProps) {
     const saveToHistory = useCallback(() => {
         if (!canvasRef.current || isRestoringRef.current) return;
 
+        const canvasJSON = canvasRef.current.toJSON();
         const canvasState = {
-            objects: canvasRef.current.toJSON(),
+            objects: canvasJSON,
             backgroundColor: canvasRef.current.backgroundColor,
         };
         const currentState = JSON.stringify(canvasState);
 
+        // Don't save duplicate states
+        if (historyRef.current[historyIndexRef.current] === currentState) {
+            return;
+        }
+
+        // Remove any future history if we're in the middle of the stack
         if (historyIndexRef.current < historyRef.current.length - 1) {
             historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
         }
+
         historyRef.current.push(currentState);
+        historyIndexRef.current++;
+
+        // Limit history size
         if (historyRef.current.length > 50) {
             historyRef.current.shift();
-        } else {
-            historyIndexRef.current++;
+            historyIndexRef.current--;
         }
+
         updateUndoRedoState();
     }, [updateUndoRedoState]);
 
@@ -64,33 +76,59 @@ export function useEditor({ showToast }: UseEditorProps) {
         }, 1000);
     }, []);
 
-    const handleUndo = () => {
+    const handleUndo = useCallback(async () => {
         if (!canvasRef.current || historyIndexRef.current <= 0) return;
+        
         isRestoringRef.current = true;
         historyIndexRef.current--;
-        const prevState = JSON.parse(historyRef.current[historyIndexRef.current]);
-        canvasRef.current.loadFromJSON(prevState.objects, () => {
-            canvasRef.current!.backgroundColor = prevState.backgroundColor;
-            setBackgroundColor(prevState.backgroundColor as string);
-            canvasRef.current!.renderAll();
+        
+        try {
+            const prevState = JSON.parse(historyRef.current[historyIndexRef.current]);
+            await canvasRef.current.loadFromJSON(prevState.objects);
+            
+            if (canvasRef.current) {
+                canvasRef.current.backgroundColor = prevState.backgroundColor;
+                setBackgroundColor(prevState.backgroundColor as string);
+                canvasRef.current.renderAll();
+            }
+            
             isRestoringRef.current = false;
             updateUndoRedoState();
-        });
-    };
+        } catch (error) {
+            console.error('Error during undo:', error);
+            isRestoringRef.current = false;
+            // Revert index change if parsing failed
+            historyIndexRef.current++;
+            updateUndoRedoState();
+        }
+    }, [updateUndoRedoState]);
 
-    const handleRedo = () => {
+    const handleRedo = useCallback(async () => {
         if (!canvasRef.current || historyIndexRef.current >= historyRef.current.length - 1) return;
+        
         isRestoringRef.current = true;
         historyIndexRef.current++;
-        const nextState = JSON.parse(historyRef.current[historyIndexRef.current]);
-        canvasRef.current.loadFromJSON(nextState.objects, () => {
-            canvasRef.current!.backgroundColor = nextState.backgroundColor;
-            setBackgroundColor(nextState.backgroundColor as string);
-            canvasRef.current!.renderAll();
+        
+        try {
+            const nextState = JSON.parse(historyRef.current[historyIndexRef.current]);
+            await canvasRef.current.loadFromJSON(nextState.objects);
+            
+            if (canvasRef.current) {
+                canvasRef.current.backgroundColor = nextState.backgroundColor;
+                setBackgroundColor(nextState.backgroundColor as string);
+                canvasRef.current.renderAll();
+            }
+            
             isRestoringRef.current = false;
             updateUndoRedoState();
-        });
-    };
+        } catch (error) {
+            console.error('Error during redo:', error);
+            isRestoringRef.current = false;
+            // Revert index change if parsing failed
+            historyIndexRef.current--;
+            updateUndoRedoState();
+        }
+    }, [updateUndoRedoState]);
 
     const handleBackgroundColorChange = (color: string) => {
         setBackgroundColor(color);
@@ -106,19 +144,38 @@ export function useEditor({ showToast }: UseEditorProps) {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const loaded = loadCanvasState(canvas);
-        if (loaded) {
-            setTimeout(() => {
-                if (canvas.backgroundColor) {
+        // Initialize history with canvas state
+        const initializeHistory = () => {
+            const canvasJSON = canvas.toJSON();
+            const initialState = {
+                objects: canvasJSON,
+                backgroundColor: canvas.backgroundColor,
+            };
+            historyRef.current = [JSON.stringify(initialState)];
+            historyIndexRef.current = 0;
+            updateUndoRedoState();
+        };
+
+        loadCanvasState(canvas)
+            .then((loaded) => {
+                if (loaded && canvas.backgroundColor) {
                     setBackgroundColor(canvas.backgroundColor as string);
                 }
-                saveToHistory();
-            }, 100);
-        } else {
-            setTimeout(saveToHistory, 100);
-        }
+                // Always initialize history after loading attempt
+                setTimeout(initializeHistory, 50);
+            })
+            .catch(() => {
+                // If loading fails, still initialize history
+                setTimeout(initializeHistory, 50);
+            });
 
-        const historyHandler = () => { saveToHistory(); debouncedSave(); };
+        const historyHandler = () => { 
+            // Add small delay to ensure the canvas state has been updated
+            setTimeout(() => {
+                saveToHistory(); 
+                debouncedSave(); 
+            }, 10);
+        };
         const selectionHandler = (e: any) => { setSelectedObject(e.selected?.[0] || null); };
 
         canvas.on('selection:created', selectionHandler);
@@ -139,7 +196,7 @@ export function useEditor({ showToast }: UseEditorProps) {
             canvas.off('path:created', historyHandler);
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         };
-    }, [saveToHistory, debouncedSave]);
+    }, [saveToHistory, debouncedSave, updateUndoRedoState]);
 
     const handleAddText = () => { if (canvasRef.current) addTextToCanvas(canvasRef.current); };
     const handleUpdateText = (options: any) => { if (selectedObject) { selectedObject.set(options); canvasRef.current?.renderAll(); } };
@@ -153,7 +210,22 @@ export function useEditor({ showToast }: UseEditorProps) {
     useEffect(() => { const handleKeyDown = (e: KeyboardEvent) => { if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return; if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); } if ((e.ctrlKey || e.metaKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) { e.preventDefault(); handleRedo(); } if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); handleDeleteObject(); } if ((e.ctrlKey || e.metaKey) && e.key === 'c') { e.preventDefault(); handleCopyObject(); } if ((e.ctrlKey || e.metaKey) && e.key === 'v') { e.preventDefault(); handleSmartPaste(); } }; document.addEventListener('keydown', handleKeyDown); return () => document.removeEventListener('keydown', handleKeyDown); }, [handleDeleteObject, handleCopyObject, handleSmartPaste, handleUndo, handleRedo]);
     const handleClearCanvas = () => setShowClearDialog(true);
     const cancelClearCanvas = () => setShowClearDialog(false);
-    const confirmClearCanvas = () => { if (!canvasRef.current) return; const canvas = canvasRef.current; const bgColor = canvas.backgroundColor; const objects = canvas.getObjects(); objects.forEach(obj => canvas.remove(obj)); canvas.discardActiveObject(); canvas.backgroundColor = bgColor; canvas.renderAll(); setSelectedObject(null); setShowClearDialog(false); saveCanvasState(canvas); };
+    const confirmClearCanvas = useCallback(() => { 
+        if (!canvasRef.current) return; 
+        const canvas = canvasRef.current; 
+        const bgColor = canvas.backgroundColor; 
+        const objects = canvas.getObjects(); 
+        objects.forEach(obj => canvas.remove(obj)); 
+        canvas.discardActiveObject(); 
+        canvas.backgroundColor = bgColor; 
+        canvas.renderAll(); 
+        setSelectedObject(null); 
+        setShowClearDialog(false); 
+        // Clear localStorage as well
+        clearCanvasState();
+        // The history will be saved automatically by the object:removed events
+        debouncedSave();
+    }, [debouncedSave]);
     const handleDownload = () => { if (canvasRef.current) downloadCanvas(canvasRef.current); };
     const handleApiKeySubmit = (key: string) => { localStorage.setItem('gemini_api_key', key); setShowApiKeyModal(false); };
     const handleReplaceCanvasImage = (imageUrl: string) => { if (canvasRef.current) { replaceCanvasWithImage(canvasRef.current, imageUrl); } };
