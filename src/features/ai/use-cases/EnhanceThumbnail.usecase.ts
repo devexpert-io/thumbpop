@@ -1,7 +1,7 @@
-import { aiRepository } from '../services/AI.repository';
+import { IAIRepository } from '../types';
 import { GenerateImageParams } from '../types';
 
-export const enhanceThumbnailUseCase = {
+export const createEnhanceThumbnailUseCase = (aiRepository: IAIRepository) => ({
     async execute(params: GenerateImageParams): Promise<string> {
         if (!params.canvasImage) {
             throw new Error('Canvas image is required');
@@ -21,4 +21,4 @@ export const enhanceThumbnailUseCase = {
 
         return aiRepository.enhance(params);
     },
-};
+});

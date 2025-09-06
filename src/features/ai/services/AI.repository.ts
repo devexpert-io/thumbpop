@@ -1,16 +1,15 @@
-import {geminiAIDataSource} from './data-sources/Gemini.datasource';
-import {GenerateImageParams, IAIRepository} from "../types";
+import {GenerateImageParams, IAIDataSource, IAIRepository} from "../types";
 
-export const aiRepository: IAIRepository = {
+export const createAIRepository = (aiDataSource: IAIDataSource): IAIRepository => ({
     async enhance(params: GenerateImageParams): Promise<string> {
-        return geminiAIDataSource.generateImage(params);
+        return aiDataSource.enhance(params);
     },
 
     initialize(apiKey: string): void {
-        geminiAIDataSource.initialize(apiKey);
+        aiDataSource.initialize(apiKey);
     },
 
     isInitialized(): boolean {
-        return geminiAIDataSource.isInitialized();
-    },
-};
+        return aiDataSource.isInitialized();
+    }
+})

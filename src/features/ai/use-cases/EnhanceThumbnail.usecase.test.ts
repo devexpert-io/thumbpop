@@ -1,10 +1,13 @@
-import { enhanceThumbnailUseCase } from './EnhanceThumbnail.usecase';
-import { aiRepository } from '../services/AI.repository';
+import { createEnhanceThumbnailUseCase } from './EnhanceThumbnail.usecase';
 import { GenerateImageParams, IAIRepository } from '../types';
 
-jest.mock('../services/AI.repository');
+const mockedRepository = {
+    initialize: jest.fn(),
+    isInitialized: jest.fn(),
+    enhance: jest.fn(),
+} as jest.Mocked<IAIRepository>;
 
-const mockedRepository = aiRepository as jest.Mocked<IAIRepository>;
+const enhanceThumbnailUseCase = createEnhanceThumbnailUseCase(mockedRepository);
 
 describe('enhanceThumbnailUseCase', () => {
     beforeEach(() => {
@@ -35,7 +38,9 @@ describe('enhanceThumbnailUseCase', () => {
         it('should throw error when userPrompt is missing and not in lucky mode', async () => {
             mockedRepository.isInitialized.mockReturnValue(true);
             const params = { ...validParams, userPrompt: undefined, isLucky: false };
-            await expect(enhanceThumbnailUseCase.execute(params)).rejects.toThrow('User prompt is required when not using lucky mode');
+            await expect(enhanceThumbnailUseCase.execute(params)).rejects.toThrow(
+                'User prompt is required when not using lucky mode'
+            );
         });
 
         it('should not require userPrompt when in lucky mode', async () => {

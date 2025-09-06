@@ -1,16 +1,19 @@
-import { aiRepository } from './AI.repository';
-import { geminiAIDataSource } from './data-sources/Gemini.datasource';
-import { GenerateImageParams } from '../types';
+import {GenerateImageParams, IAIDataSource} from '../types';
+import {createAIRepository} from "./AI.repository";
 
-jest.mock('./data-sources/Gemini.datasource');
+const mockedDataSource = {
+    enhance: jest.fn(),
+    initialize: jest.fn(),
+    isInitialized: jest.fn(),
+} as jest.Mocked<IAIDataSource>;
 
-const mockedDataSource = geminiAIDataSource as jest.Mocked<typeof geminiAIDataSource>;
+const aiRepository = createAIRepository(mockedDataSource);
 
 describe('aiRepository', () => {
     beforeEach(() => {
         mockedDataSource.initialize.mockClear();
         mockedDataSource.isInitialized.mockClear();
-        mockedDataSource.generateImage.mockClear();
+        mockedDataSource.enhance.mockClear();
     });
 
     describe('initialize', () => {
@@ -44,20 +47,20 @@ describe('aiRepository', () => {
             isLucky: false,
         };
 
-        it('should call the data source generateImage with the correct parameters', async () => {
+        it('should call the data source enhance with the correct parameters', async () => {
             const expectedResult = 'data:image/png;base64,mock-base64-data';
-            mockedDataSource.generateImage.mockResolvedValue(expectedResult);
+            mockedDataSource.enhance.mockResolvedValue(expectedResult);
 
             const result = await aiRepository.enhance(validParams);
 
-            expect(mockedDataSource.generateImage).toHaveBeenCalledWith(validParams);
-            expect(mockedDataSource.generateImage).toHaveBeenCalledTimes(1);
+            expect(mockedDataSource.enhance).toHaveBeenCalledWith(validParams);
+            expect(mockedDataSource.enhance).toHaveBeenCalledTimes(1);
             expect(result).toBe(expectedResult);
         });
 
         it('should propagate errors from the data source', async () => {
             const fakeError = new Error('Fake AI error');
-            mockedDataSource.generateImage.mockRejectedValue(fakeError);
+            mockedDataSource.enhance.mockRejectedValue(fakeError);
 
             await expect(aiRepository.enhance(validParams)).rejects.toThrow('Fake AI error');
         });

@@ -1,9 +1,9 @@
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
-import {GenerateImageParams} from "../../types";
+import { GenerateImageParams, IAIDataSource } from "../../types";
 
 let ai: GoogleGenAI | null = null;
 
-export const geminiAIDataSource = {
+export const geminiAIDataSource: IAIDataSource = {
     initialize(apiKey: string): void {
         ai = new GoogleGenAI({ apiKey });
     },
@@ -12,7 +12,7 @@ export const geminiAIDataSource = {
         return ai !== null;
     },
 
-    async generateImage(params: GenerateImageParams): Promise<string> {
+    async enhance(params: GenerateImageParams): Promise<string> {
         if (!ai) {
             throw new Error('Gemini API not initialized. Please set your API key.');
         }
