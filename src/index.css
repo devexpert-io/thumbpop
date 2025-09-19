@@ -11,7 +11,33 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     @apply bg-gray-50 text-gray-900 transition-colors duration-200;
+}
+
+@layer components {
+  html.dark .chrome-picker {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.65),
+      0 0 0 1px rgba(148, 163, 184, 0.2) !important;
+    border: 1px solid rgba(148, 163, 184, 0.25) !important;
+    border-radius: 0.75rem !important;
   }
+
+  html.dark .chrome-picker input {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #334155 !important;
+  }
+
+  html.dark .chrome-picker label,
+  html.dark .chrome-picker span {
+    color: #cbd5f5 !important;
+  }
+
+  html.dark .chrome-picker .flexbox-fix > div > div:last-child input {
+    color: #e2e8f0 !important;
+  }
+}
 
   html.dark body {
     @apply bg-slate-950 text-gray-100;
