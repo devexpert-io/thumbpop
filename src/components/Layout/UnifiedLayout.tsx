@@ -4,6 +4,7 @@ import EnhancedToolbar from '../Toolbar/EnhancedToolbar';
 import { FabricObject } from 'fabric';
 import { Sparkles, Wand2, ChevronDown, ChevronUp, Info, Settings, MessageSquare } from 'lucide-react';
 import ThemeToggle from '../Theme/ThemeToggle';
+import { ReactComponent as ThumbpopIcon } from '../../assets/thumbpop-icon-black.svg';
 
 interface UnifiedLayoutProps {
     canvasRef: React.RefObject<any>;
@@ -91,12 +92,8 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
             <div className="bg-white border-b border-gray-100 px-4 py-2 dark:bg-slate-900 dark:border-slate-800 transition-colors">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center justify-center md:justify-start">
-                        <img
-                            src={`${process.env.PUBLIC_URL}/thumbpop.png`}
-                            alt="ThumbPop"
-                            className="h-8 w-auto mr-2"
-                        />
-                        <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-500 to-cyan-400 bg-clip-text text-transparent">
+                        <ThumbpopIcon className="h-6 w-6 m-3 text-gray-900 dark:text-white" />
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-white transition-colors">
                             ThumbPop
                         </h1>
                     </div>
