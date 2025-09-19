@@ -3,6 +3,7 @@ import ThumbnailCanvas from '../Canvas/ThumbnailCanvas';
 import EnhancedToolbar from '../Toolbar/EnhancedToolbar';
 import { FabricObject } from 'fabric';
 import { Sparkles, Wand2, ChevronDown, ChevronUp, Info, Settings, MessageSquare } from 'lucide-react';
+import ThemeToggle from '../Theme/ThemeToggle';
 
 interface UnifiedLayoutProps {
     canvasRef: React.RefObject<any>;
@@ -85,9 +86,9 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50">
+        <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-900 dark:text-slate-100 transition-colors">
             {/* Header with Logo */}
-            <div className="bg-white border-b border-gray-100 px-4 py-2">
+            <div className="bg-white border-b border-gray-100 px-4 py-2 dark:bg-slate-900 dark:border-slate-800 transition-colors">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center justify-center md:justify-start">
                         <img
@@ -101,11 +102,12 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <ThemeToggle />
                         <a
                             href="https://github.com/devexpert-io/thumbpop"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
                             title="View source code on GitHub"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -118,7 +120,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                             href="https://github.com/devexpert-io/thumbpop/issues/new"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors dark:text-slate-300 dark:hover:text-blue-300 dark:hover:bg-blue-500/20"
                             title="Send feedback or report issues"
                         >
                             <MessageSquare size={16} />
@@ -128,7 +130,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                 </div>
             </div>
 
-            <div className="bg-white border-b border-gray-200 shadow-sm">
+            <div className="bg-white border-b border-gray-200 shadow-sm dark:bg-slate-900 dark:border-slate-800 transition-colors">
                 <EnhancedToolbar
                     selectedObject={selectedObject}
                     backgroundColor={backgroundColor}
@@ -152,16 +154,16 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                 />
             </div>
 
-            <div className="bg-white border-b border-gray-200 shadow-sm">
+            <div className="bg-white border-b border-gray-200 shadow-sm dark:bg-slate-900 dark:border-slate-800 transition-colors">
                 <div className="max-w-7xl mx-auto px-4">
                     <button
                         onClick={() => setShowVideoContext(!showVideoContext)}
-                        className="w-full py-2 flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                        className="w-full py-2 flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors dark:text-slate-200 dark:hover:text-white"
                     >
                         <div className="flex items-center gap-2">
                             <span>📹 Video Context</span>
                             {videoContext && !showVideoContext && (
-                                <span className="text-gray-500 font-normal truncate max-w-md">
+                                <span className="text-gray-500 font-normal truncate max-w-md dark:text-slate-400">
                   {videoContext}
                 </span>
                             )}
@@ -174,7 +176,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
               <textarea
                   value={videoContext}
                   onChange={(e) => onVideoContextChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-sm"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-sm bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
                   rows={2}
                   placeholder="Describe your video content (e.g., A cooking tutorial on how to make the perfect chocolate cake)"
                   disabled={isLoadingAI}
@@ -187,7 +189,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
             <div className="flex-1 flex flex-col min-h-0">
                 <div className="flex-1 flex items-center justify-center p-4 md:p-8">
                     <div className="w-full max-w-7xl">
-                        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+                        <div className="bg-white rounded-lg shadow-xl overflow-hidden dark:bg-slate-900/70 dark:ring-1 dark:ring-slate-800">
                             <ThumbnailCanvas
                                 canvasRef={canvasRef}
                                 onDrop={(files) => {
@@ -199,12 +201,12 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                     </div>
                 </div>
 
-                <div className="bg-white border-t border-gray-200 shadow-lg">
+                <div className="bg-white border-t border-gray-200 shadow-lg dark:bg-slate-900/80 dark:border-slate-800 transition-colors">
                     <div className="max-w-7xl mx-auto px-4 py-4">
                         <div className="flex flex-col md:flex-row gap-3">
                             <button
                                 onClick={() => setShowInstructions(!showInstructions)}
-                                className="md:hidden flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-800"
+                                className="md:hidden flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-800 dark:text-slate-300 dark:hover:text-white"
                             >
                                 <Info size={16} />
                                 How it works
@@ -216,7 +218,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                                     value={userPrompt}
                                     onChange={(e) => setUserPrompt(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleGenerate()}
-                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
                                     placeholder="✨ Describe AI enhancements (e.g., add dramatic lighting, make text glow, cinematic style)"
                                     disabled={isLoadingAI}
                                 />
@@ -259,7 +261,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
 
                                 <button
                                     onClick={onEditApiKey}
-                                    className="p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all flex items-center justify-center"
+                                    className="p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all flex items-center justify-center dark:bg-blue-500/20 dark:hover:bg-blue-500/30 dark:text-blue-200"
                                     title="Edit Gemini API Key"
                                 >
                                     <Settings size={18} />
@@ -267,7 +269,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                             </div>
                         </div>
 
-                        <div className="hidden md:flex items-center gap-4 mt-3 text-xs text-gray-500">
+                        <div className="hidden md:flex items-center gap-4 mt-3 text-xs text-gray-500 dark:text-slate-400">
                             <div className="flex items-center gap-2">
                                 <span className="font-medium">Quick guide:</span>
                                 <span>1. Set video context above</span>
@@ -276,13 +278,13 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                                 <span>→</span>
                                 <span>3. Enhance with AI</span>
                             </div>
-                            <div className="ml-auto italic">
+                            <div className="ml-auto italic dark:text-slate-300">
                                 💡 "I'm Lucky" uses an optimized prompt for viral potential!
                             </div>
                         </div>
 
                         {showInstructions && (
-                            <div className="md:hidden mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
+                            <div className="md:hidden mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                                 <p className="font-medium mb-2">Quick guide:</p>
                                 <ol className="space-y-1">
                                     <li>1. Set your video context above</li>

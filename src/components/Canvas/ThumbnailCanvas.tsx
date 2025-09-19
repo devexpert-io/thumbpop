@@ -165,8 +165,8 @@ const ThumbnailCanvas: React.FC<ThumbnailCanvasProps> = ({ canvasRef, onDrop }) 
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full h-full flex items-center justify-center ${
-        isDragging ? 'bg-blue-50' : ''
+      className={`relative w-full h-full flex items-center justify-center transition-colors ${
+        isDragging ? 'bg-blue-50 dark:bg-blue-500/10' : ''
       }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -174,7 +174,7 @@ const ThumbnailCanvas: React.FC<ThumbnailCanvasProps> = ({ canvasRef, onDrop }) 
     >
       <canvas 
         ref={canvasElementRef} 
-        className="border-2 border-gray-300 rounded"
+        className="border-2 border-gray-300 rounded dark:border-slate-700"
         style={{ pointerEvents: 'all' }}
       />
       {isDragging && (

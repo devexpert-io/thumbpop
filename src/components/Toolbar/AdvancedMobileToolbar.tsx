@@ -186,16 +186,16 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
   };
 
   return (
-    <div className="bg-white border-b border-gray-200">
+    <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-200">
       {/* ROW 1: Core Actions */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-slate-700">
         {/* History */}
         <div className="flex items-center gap-1">
           <button
             onClick={onUndo}
             disabled={!canUndo}
             className={`p-2 rounded-lg transition-colors ${
-              canUndo ? 'hover:bg-gray-100' : 'opacity-30'
+              canUndo ? 'hover:bg-gray-100 dark:hover:bg-slate-800' : 'opacity-30'
             }`}
             title="Undo"
           >
@@ -205,7 +205,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
             onClick={onRedo}
             disabled={!canRedo}
             className={`p-2 rounded-lg transition-colors ${
-              canRedo ? 'hover:bg-gray-100' : 'opacity-30'
+              canRedo ? 'hover:bg-gray-100 dark:hover:bg-slate-800' : 'opacity-30'
             }`}
             title="Redo"
           >
@@ -217,7 +217,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onAddText}
-            className="px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors flex items-center gap-1"
+            className="px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/30 text-blue-700 dark:text-blue-200 transition-colors flex items-center gap-1"
           >
             <Type size={18} />
             <span className="text-sm font-medium">Text</span>
@@ -232,7 +232,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1"
+            className="px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
           >
             <Upload size={18} />
             <span className="text-sm">Upload</span>
@@ -244,7 +244,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
             className={`p-2 rounded-lg transition-colors ${
-              showAdvanced ? 'bg-gray-200' : 'hover:bg-gray-100'
+              showAdvanced ? 'bg-gray-200 dark:bg-slate-700' : 'hover:bg-gray-100 dark:hover:bg-slate-800'
             }`}
             title="More tools"
           >
@@ -254,7 +254,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
       </div>
 
       {/* ROW 2: Context-Sensitive Controls */}
-      <div className="px-3 py-2 border-b border-gray-100">
+      <div className="px-3 py-2 border-b border-gray-100 dark:border-slate-700">
         {isTextSelected ? (
           // Text Controls
           <div className="space-y-2">
@@ -262,7 +262,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
               <select
                 value={fontFamily}
                 onChange={(e) => handleUpdateText('fontFamily', e.target.value)}
-                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                className="flex-1 px-2 py-1 border border-gray-300 dark:border-slate-600 rounded text-sm bg-white dark:bg-slate-900 dark:text-slate-100"
               >
                 {fonts.map((font) => (
                   <option key={font.value} value={font.value}>
@@ -271,7 +271,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 ))}
               </select>
               
-              <div className="flex items-center gap-1 bg-gray-50 rounded px-2 py-1">
+              <div className="flex items-center gap-1 bg-gray-50 dark:bg-slate-800 rounded px-2 py-1">
                 <input
                   type="number"
                   value={fontSize}
@@ -280,7 +280,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                   min="8"
                   max="200"
                 />
-                <span className="text-xs text-gray-500">px</span>
+                <span className="text-xs text-gray-500 dark:text-slate-400">px</span>
               </div>
             </div>
 
@@ -289,7 +289,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 <button
                   onClick={() => handleUpdateText('fontWeight', fontWeight === 'bold' ? 'normal' : 'bold')}
                   className={`p-2 rounded transition-colors ${
-                    fontWeight === 'bold' ? 'bg-gray-200' : 'hover:bg-gray-100'
+                    fontWeight === 'bold' ? 'bg-gray-200 dark:bg-slate-700' : 'hover:bg-gray-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   <Bold size={16} />
@@ -297,7 +297,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 <button
                   onClick={() => handleUpdateText('fontStyle', fontStyle === 'italic' ? 'normal' : 'italic')}
                   className={`p-2 rounded transition-colors ${
-                    fontStyle === 'italic' ? 'bg-gray-200' : 'hover:bg-gray-100'
+                    fontStyle === 'italic' ? 'bg-gray-200 dark:bg-slate-700' : 'hover:bg-gray-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   <Italic size={16} />
@@ -305,7 +305,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 <button
                   onClick={() => handleUpdateText('underline', textDecoration !== 'underline')}
                   className={`p-2 rounded transition-colors ${
-                    textDecoration === 'underline' ? 'bg-gray-200' : 'hover:bg-gray-100'
+                    textDecoration === 'underline' ? 'bg-gray-200 dark:bg-slate-700' : 'hover:bg-gray-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   <Underline size={16} />
@@ -315,7 +315,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => openColorPicker('text')}
-                  className="p-1 rounded border hover:bg-gray-50 flex items-center gap-1"
+                  className="p-1 rounded border hover:bg-gray-50 dark:bg-slate-800 flex items-center gap-1"
                   title="Text color"
                 >
                   <div 
@@ -326,7 +326,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 </button>
                 <button
                   onClick={() => openColorPicker('stroke')}
-                  className="p-1 rounded border hover:bg-gray-50 flex items-center gap-1"
+                  className="p-1 rounded border hover:bg-gray-50 dark:bg-slate-800 flex items-center gap-1"
                   title="Stroke color"
                 >
                   <div 
@@ -343,14 +343,14 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onRemoveBackground}
-              className="px-3 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 transition-colors flex items-center gap-1"
+              className="px-3 py-2 rounded-lg bg-purple-50 dark:bg-purple-500/20 hover:bg-purple-100 dark:hover:bg-purple-500/30 text-purple-700 dark:text-purple-200 transition-colors flex items-center gap-1"
             >
               <Wand2 size={16} />
               <span className="text-sm font-medium">Remove BG</span>
             </button>
             <button
               onClick={() => openColorPicker('background')}
-              className="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1"
+              className="px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
             >
               <div 
                 className="w-4 h-4 rounded border"
@@ -364,7 +364,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => openColorPicker('background')}
-              className="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1"
+              className="px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
             >
               <Palette size={16} />
               <div 
@@ -375,7 +375,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
             </button>
             <button
               onClick={onClear}
-              className="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1"
+              className="px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
             >
               <RotateCcw size={16} />
               <span className="text-sm">Clear</span>
@@ -386,7 +386,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
 
       {/* ROW 3: Advanced Controls (Expandable) */}
       {showAdvanced && (
-        <div className="px-3 py-2 bg-gray-50">
+        <div className="px-3 py-2 bg-gray-50 dark:bg-slate-800">
           <div className="flex items-center justify-between">
             {/* Alignment */}
             {isTextSelected && (
@@ -394,7 +394,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 <button
                   onClick={() => handleUpdateText('textAlign', 'left')}
                   className={`p-2 rounded transition-colors ${
-                    textAlign === 'left' ? 'bg-gray-200' : 'hover:bg-gray-100'
+                    textAlign === 'left' ? 'bg-gray-200 dark:bg-slate-700' : 'hover:bg-gray-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   <AlignLeft size={16} />
@@ -402,7 +402,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 <button
                   onClick={() => handleUpdateText('textAlign', 'center')}
                   className={`p-2 rounded transition-colors ${
-                    textAlign === 'center' ? 'bg-gray-200' : 'hover:bg-gray-100'
+                    textAlign === 'center' ? 'bg-gray-200 dark:bg-slate-700' : 'hover:bg-gray-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   <AlignCenter size={16} />
@@ -410,7 +410,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 <button
                   onClick={() => handleUpdateText('textAlign', 'right')}
                   className={`p-2 rounded transition-colors ${
-                    textAlign === 'right' ? 'bg-gray-200' : 'hover:bg-gray-100'
+                    textAlign === 'right' ? 'bg-gray-200 dark:bg-slate-700' : 'hover:bg-gray-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   <AlignRight size={16} />
@@ -424,7 +424,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 onClick={onCopy}
                 disabled={!hasSelection}
                 className={`p-2 rounded transition-colors ${
-                  hasSelection ? 'hover:bg-gray-100' : 'opacity-30'
+                  hasSelection ? 'hover:bg-gray-100 dark:hover:bg-slate-800' : 'opacity-30'
                 }`}
                 title="Copy"
               >
@@ -434,7 +434,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 onClick={onPaste}
                 disabled={!canPaste}
                 className={`p-2 rounded transition-colors ${
-                  canPaste ? 'hover:bg-gray-100' : 'opacity-30'
+                  canPaste ? 'hover:bg-gray-100 dark:hover:bg-slate-800' : 'opacity-30'
                 }`}
                 title="Paste"
               >
@@ -444,7 +444,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
                 onClick={onDelete}
                 disabled={!hasSelection}
                 className={`p-2 rounded transition-colors ${
-                  hasSelection ? 'hover:bg-gray-100' : 'opacity-30'
+                  hasSelection ? 'hover:bg-gray-100 dark:hover:bg-slate-800' : 'opacity-30'
                 }`}
                 title="Delete"
               >
@@ -455,7 +455,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
             {/* Download */}
             <button
               onClick={onDownload}
-              className="px-3 py-2 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 transition-colors flex items-center gap-1"
+              className="px-3 py-2 rounded-lg bg-green-50 dark:bg-green-500/20 hover:bg-green-100 dark:hover:bg-green-500/30 text-green-700 dark:text-green-200 transition-colors flex items-center gap-1"
             >
               <Download size={16} />
               <span className="text-sm font-medium">Save</span>
@@ -464,7 +464,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
             {/* API Key Settings */}
             <button
               onClick={onEditApiKey}
-              className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors flex items-center justify-center"
+              className="p-2 rounded-lg bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 transition-colors flex items-center justify-center"
               title="Edit Gemini API Key"
             >
               <Settings size={16} />
@@ -476,7 +476,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
       {/* Color Picker Overlay */}
       {showColorPicker && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-4 max-w-sm w-full">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 max-w-sm w-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-medium">
                 {colorPickerType === 'background' ? 'Background Color' : 
@@ -484,7 +484,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
               </h3>
               <button
                 onClick={() => setShowColorPicker(false)}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded"
               >
                 ×
               </button>
