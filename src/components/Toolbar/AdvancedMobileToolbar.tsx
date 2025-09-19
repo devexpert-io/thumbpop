@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Undo, Redo, Type, Upload, Download, Copy, Clipboard, Trash2,
   Palette, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  RotateCcw, Settings, ChevronDown, Wand2, Square, Circle
+  RotateCcw, Settings, Wand2
 } from 'lucide-react';
 import { ChromePicker } from 'react-color';
 import { FabricObject, IText } from 'fabric';

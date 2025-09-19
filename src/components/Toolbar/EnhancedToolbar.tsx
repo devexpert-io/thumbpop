@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Copy, Clipboard, Trash2, RotateCcw, Undo, Redo, Type, Upload,
   Palette, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  Image, Wand2, Download
+  Wand2, Download
 } from 'lucide-react';
 import { ChromePicker } from 'react-color';
 import { FabricObject, IText } from 'fabric';
@@ -73,7 +73,7 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
   const { loadTextPropertiesUseCase, saveTextPropertiesUseCase } = useServices();
 
   // Text properties from selected object
-  const [textContent, setTextContent] = useState('');
+  const [, setTextContent] = useState('');
   const [fontFamily, setFontFamily] = useState('Impact');
   const [fontSize, setFontSize] = useState(48);
   const [textColor, setTextColor] = useState('#FFFFFF');
