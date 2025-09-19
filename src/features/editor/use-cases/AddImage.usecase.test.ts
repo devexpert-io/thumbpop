@@ -8,7 +8,6 @@ describe('AddImageUseCase', () => {
         clearCanvasState: jest.fn(),
         loadTextProperties: jest.fn(),
         saveTextProperties: jest.fn(),
-        removeBackground: jest.fn(),
         loadImage: jest.fn(),
     } as any;
 

@@ -25,10 +25,6 @@ export interface ITextPropertiesDataSource {
     save(properties: Partial<TextProperties>): void;
 }
 
-export interface IBackgroundRemovalDataSource {
-    removeBackground(imageUrl: string): Promise<string>;
-}
-
 export interface IImageDataSource {
     load(imageUrl: string): Promise<FabricImage>;
 }
@@ -39,7 +35,6 @@ export interface IEditorRepository {
     clearCanvasState(): Promise<void>;
     loadTextProperties(): TextProperties;
     saveTextProperties(properties: Partial<TextProperties>): void;
-    removeBackground(imageUrl: string): Promise<string>;
     loadImage(imageUrl: string): Promise<FabricImage>;
 }
 

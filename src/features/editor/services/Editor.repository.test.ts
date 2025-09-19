@@ -1,10 +1,5 @@
 import { createEditorRepository } from './Editor.repository';
-import {
-    IBackgroundRemovalDataSource,
-    ICanvasStateDataSource,
-    IImageDataSource,
-    ITextPropertiesDataSource,
-} from '../types';
+import { ICanvasStateDataSource, IImageDataSource, ITextPropertiesDataSource } from '../types';
 
 const canvasStateDataSource: jest.Mocked<ICanvasStateDataSource> = {
     save: jest.fn(),
@@ -17,10 +12,6 @@ const textPropertiesDataSource: jest.Mocked<ITextPropertiesDataSource> = {
     save: jest.fn(),
 };
 
-const backgroundRemovalDataSource: jest.Mocked<IBackgroundRemovalDataSource> = {
-    removeBackground: jest.fn(),
-};
-
 const imageDataSource: jest.Mocked<IImageDataSource> = {
     load: jest.fn(),
 };
@@ -28,7 +19,6 @@ const imageDataSource: jest.Mocked<IImageDataSource> = {
 const repository = createEditorRepository({
     canvasStateDataSource,
     textPropertiesDataSource,
-    backgroundRemovalDataSource,
     imageDataSource,
 });
 
@@ -67,13 +57,6 @@ describe('EditorRepository', () => {
 
         repository.saveTextProperties({ fontFamily: 'Arial' });
         expect(textPropertiesDataSource.save).toHaveBeenCalledWith({ fontFamily: 'Arial' });
-    });
-
-    it('delegates to background removal data source', async () => {
-        backgroundRemovalDataSource.removeBackground.mockResolvedValue('data-url');
-        const result = await repository.removeBackground('image-url');
-        expect(result).toBe('data-url');
-        expect(backgroundRemovalDataSource.removeBackground).toHaveBeenCalledWith('image-url');
     });
 
     it('loads image from data source', async () => {

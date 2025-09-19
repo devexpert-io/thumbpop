@@ -1,5 +1,4 @@
 import {
-    IBackgroundRemovalDataSource,
     ICanvasStateDataSource,
     IEditorRepository,
     IImageDataSource,
@@ -11,14 +10,12 @@ import {
 interface EditorRepositoryDependencies {
     canvasStateDataSource: ICanvasStateDataSource;
     textPropertiesDataSource: ITextPropertiesDataSource;
-    backgroundRemovalDataSource: IBackgroundRemovalDataSource;
     imageDataSource: IImageDataSource;
 }
 
 export const createEditorRepository = ({
     canvasStateDataSource,
     textPropertiesDataSource,
-    backgroundRemovalDataSource,
     imageDataSource,
 }: EditorRepositoryDependencies): IEditorRepository => ({
     async saveCanvasState(state: CanvasStateData): Promise<void> {
@@ -39,10 +36,6 @@ export const createEditorRepository = ({
 
     saveTextProperties(properties: Partial<TextProperties>): void {
         textPropertiesDataSource.save(properties);
-    },
-
-    async removeBackground(imageUrl: string): Promise<string> {
-        return backgroundRemovalDataSource.removeBackground(imageUrl);
     },
 
     async loadImage(imageUrl: string) {

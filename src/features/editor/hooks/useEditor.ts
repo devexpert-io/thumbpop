@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import type { CSSProperties } from 'react';
 import { Canvas, FabricObject, FabricImage } from 'fabric';
 import { useServices } from '../../../core/di/ServicesContext';
 
 interface UseEditorProps {
     showToast: (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => void;
+    onBackgroundRemovalStart?: (style: CSSProperties) => void;
+    onBackgroundRemovalEnd?: () => void;
 }
 
-export function useEditor({ showToast }: UseEditorProps) {
+export function useEditor({ showToast, onBackgroundRemovalStart, onBackgroundRemovalEnd }: UseEditorProps) {
     const {
         addTextUseCase,
         addImageUseCase,
@@ -224,6 +227,26 @@ export function useEditor({ showToast }: UseEditorProps) {
         const image = selectedObject as FabricImage;
         const imageUrl = image.getSrc();
         try {
+            const canvasElement = canvasRef.current.getElement();
+            if (canvasElement && onBackgroundRemovalStart) {
+                const zoom = canvasRef.current.getZoom();
+                const boundingRect = image.getBoundingRect();
+                const canvasBoundingRect = canvasElement.getBoundingClientRect();
+                const style: CSSProperties = {
+                    position: 'fixed',
+                    top: canvasBoundingRect.top + boundingRect.top * zoom,
+                    left: canvasBoundingRect.left + boundingRect.left * zoom,
+                    width: boundingRect.width * zoom,
+                    height: boundingRect.height * zoom,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    zIndex: 100,
+                };
+                onBackgroundRemovalStart(style);
+            }
+
             const processedImageUrl = await removeBackgroundUseCase.execute(imageUrl);
             const newImg = await FabricImage.fromURL(processedImageUrl);
             newImg.set({
@@ -238,8 +261,11 @@ export function useEditor({ showToast }: UseEditorProps) {
             canvasRef.current?.setActiveObject(newImg);
             canvasRef.current?.renderAll();
             setSelectedObject(newImg);
+            showToast('Background removed successfully!', 'success');
         } catch (error: any) {
             showToast(`Failed to remove background: ${error.message}`, 'error');
+        } finally {
+            onBackgroundRemovalEnd?.();
         }
     };
 

@@ -8,6 +8,8 @@ import { useAIPrompt } from './features/ai/hooks/useAIPrompt';
 
 function AppContent() {
     const [toasts, setToasts] = useState<ToastType[]>([]);
+    const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+    const [spinnerStyle, setSpinnerStyle] = useState<React.CSSProperties>({});
 
     const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => {
         const id = Date.now().toString();
@@ -43,7 +45,17 @@ function AppContent() {
         canRedo,
         saveToHistory,
         getCanvasImage,
-    } = useEditor({ showToast });
+    } = useEditor({
+        showToast,
+        onBackgroundRemovalStart: (style) => {
+            setSpinnerStyle(style);
+            setIsRemovingBackground(true);
+        },
+        onBackgroundRemovalEnd: () => {
+            setIsRemovingBackground(false);
+            setSpinnerStyle({});
+        },
+    });
 
     const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
@@ -103,6 +115,12 @@ function AppContent() {
 
     return (
         <>
+            {isRemovingBackground && (
+                <div style={spinnerStyle}>
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white" />
+                </div>
+            )}
+
             <UnifiedLayout
                 canvasRef={canvasRef}
                 selectedObject={selectedObject}

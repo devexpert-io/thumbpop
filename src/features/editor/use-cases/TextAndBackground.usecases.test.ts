@@ -1,4 +1,3 @@
-import { createRemoveBackgroundUseCase } from './RemoveBackground.usecase';
 import { createLoadTextPropertiesUseCase } from './LoadTextProperties.usecase';
 import { createSaveTextPropertiesUseCase } from './SaveTextProperties.usecase';
 import { IEditorRepository } from '../types';
@@ -10,20 +9,11 @@ describe('Editor utility use cases', () => {
         clearCanvasState: jest.fn(),
         loadTextProperties: jest.fn(),
         saveTextProperties: jest.fn(),
-        removeBackground: jest.fn(),
         loadImage: jest.fn(),
     } as any;
 
     beforeEach(() => {
         jest.clearAllMocks();
-    });
-
-    it('delegates background removal to repository', async () => {
-        repository.removeBackground.mockResolvedValue('processed');
-        const useCase = createRemoveBackgroundUseCase(repository);
-        const result = await useCase.execute('image');
-        expect(result).toBe('processed');
-        expect(repository.removeBackground).toHaveBeenCalledWith('image');
     });
 
     it('loads text properties from repository', () => {

@@ -11,10 +11,13 @@ import { createGetVideoContextUseCase } from '../../features/settings/use-cases/
 import { createSaveVideoContextUseCase } from '../../features/settings/use-cases/SaveVideoContext.usecase';
 import { createCanvasStateLocalStorageDataSource } from '../../features/editor/services/data-sources/CanvasStateLocalStorage.datasource';
 import { createTextPropertiesLocalStorageDataSource } from '../../features/editor/services/data-sources/TextPropertiesLocalStorage.datasource';
-import { createBackgroundRemovalDataSource } from '../../features/editor/services/data-sources/BackgroundRemoval.datasource';
 import { createFabricImageDataSource } from '../../features/editor/services/data-sources/FabricImage.datasource';
 import { createEditorRepository } from '../../features/editor/services/Editor.repository';
 import { IEditorRepository } from '../../features/editor/types';
+import { IBackgroundRemovalRepository } from '../../features/background-removal/types';
+import { createBackgroundRemovalDataSource } from '../../features/background-removal/services/data-sources/BackgroundRemoval.datasource';
+import { createBackgroundRemovalRepository } from '../../features/background-removal/services/BackgroundRemoval.repository';
+import { createRemoveBackgroundUseCase } from '../../features/background-removal/use-cases/RemoveBackground.usecase';
 import { createAddTextUseCase } from '../../features/editor/use-cases/AddText.usecase';
 import { createAddImageUseCase } from '../../features/editor/use-cases/AddImage.usecase';
 import { createReplaceCanvasImageUseCase } from '../../features/editor/use-cases/ReplaceCanvasImage.usecase';
@@ -23,7 +26,6 @@ import { createDownloadCanvasUseCase } from '../../features/editor/use-cases/Dow
 import { createSaveCanvasStateUseCase } from '../../features/editor/use-cases/SaveCanvasState.usecase';
 import { createLoadCanvasStateUseCase } from '../../features/editor/use-cases/LoadCanvasState.usecase';
 import { createClearCanvasStateUseCase } from '../../features/editor/use-cases/ClearCanvasState.usecase';
-import { createRemoveBackgroundUseCase } from '../../features/editor/use-cases/RemoveBackground.usecase';
 import { createLoadTextPropertiesUseCase } from '../../features/editor/use-cases/LoadTextProperties.usecase';
 import { createSaveTextPropertiesUseCase } from '../../features/editor/use-cases/SaveTextProperties.usecase';
 
@@ -39,13 +41,15 @@ const saveVideoContextUseCase = createSaveVideoContextUseCase(settingsRepository
 
 const canvasStateDataSource = createCanvasStateLocalStorageDataSource();
 const textPropertiesDataSource = createTextPropertiesLocalStorageDataSource();
-const backgroundRemovalDataSource = createBackgroundRemovalDataSource();
 const fabricImageDataSource = createFabricImageDataSource();
+const backgroundRemovalDataSource = createBackgroundRemovalDataSource();
+const backgroundRemovalRepository: IBackgroundRemovalRepository = createBackgroundRemovalRepository(
+    backgroundRemovalDataSource
+);
 
 const editorRepository: IEditorRepository = createEditorRepository({
     canvasStateDataSource,
     textPropertiesDataSource,
-    backgroundRemovalDataSource,
     imageDataSource: fabricImageDataSource,
 });
 
@@ -57,7 +61,7 @@ const downloadCanvasUseCase = createDownloadCanvasUseCase();
 const saveCanvasStateUseCase = createSaveCanvasStateUseCase(editorRepository);
 const loadCanvasStateUseCase = createLoadCanvasStateUseCase(editorRepository);
 const clearCanvasStateUseCase = createClearCanvasStateUseCase(editorRepository);
-const removeBackgroundUseCase = createRemoveBackgroundUseCase(editorRepository);
+const removeBackgroundUseCase = createRemoveBackgroundUseCase(backgroundRemovalRepository);
 const loadTextPropertiesUseCase = createLoadTextPropertiesUseCase(editorRepository);
 const saveTextPropertiesUseCase = createSaveTextPropertiesUseCase(editorRepository);
 
