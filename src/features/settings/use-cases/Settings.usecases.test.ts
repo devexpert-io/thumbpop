@@ -2,10 +2,10 @@ import { createGetStoredApiKeyUseCase } from './GetStoredApiKey.usecase';
 import { createSaveApiKeyUseCase } from './SaveApiKey.usecase';
 import { createGetVideoContextUseCase } from './GetVideoContext.usecase';
 import { createSaveVideoContextUseCase } from './SaveVideoContext.usecase';
-import { IAISettingsRepository } from '../types';
+import { ISettingsRepository } from '../types';
 
-describe('AI settings use cases', () => {
-    const repository: jest.Mocked<IAISettingsRepository> = {
+describe('Settings use cases', () => {
+    const repository: jest.Mocked<ISettingsRepository> = {
         getApiKey: jest.fn(),
         saveApiKey: jest.fn(),
         getVideoContext: jest.fn(),

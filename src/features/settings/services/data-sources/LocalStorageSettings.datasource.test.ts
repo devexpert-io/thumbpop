@@ -1,7 +1,7 @@
-import { createLocalStorageAISettingsDataSource } from './LocalStorageSettings.datasource';
+import { createLocalStorageSettingsDataSource } from './LocalStorageSettings.datasource';
 
-describe('LocalStorageAISettingsDataSource', () => {
-    const dataSource = createLocalStorageAISettingsDataSource();
+describe('LocalStorageSettingsDataSource', () => {
+    const dataSource = createLocalStorageSettingsDataSource();
 
     beforeEach(() => {
         localStorage.clear();

@@ -1,9 +1,9 @@
-import { IAISettingsDataSource } from '../../types';
+import { ISettingsDataSource } from '../../types';
 
 const API_KEY_STORAGE_KEY = 'gemini_api_key';
 const VIDEO_CONTEXT_STORAGE_KEY = 'thumbpop_videoContext';
 
-export const createLocalStorageAISettingsDataSource = (): IAISettingsDataSource => ({
+export const createLocalStorageSettingsDataSource = (): ISettingsDataSource => ({
     getApiKey(): string | null {
         try {
             return localStorage.getItem(API_KEY_STORAGE_KEY);

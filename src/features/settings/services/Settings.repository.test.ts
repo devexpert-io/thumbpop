@@ -1,15 +1,15 @@
-import { createAISettingsRepository } from './AISettings.repository';
-import { IAISettingsDataSource } from '../types';
+import { createSettingsRepository } from './Settings.repository';
+import { ISettingsDataSource } from '../types';
 
-describe('AISettingsRepository', () => {
-    const dataSource: jest.Mocked<IAISettingsDataSource> = {
+describe('SettingsRepository', () => {
+    const dataSource: jest.Mocked<ISettingsDataSource> = {
         getApiKey: jest.fn(),
         saveApiKey: jest.fn(),
         getVideoContext: jest.fn(),
         saveVideoContext: jest.fn(),
     };
 
-    const repository = createAISettingsRepository(dataSource);
+    const repository = createSettingsRepository(dataSource);
 
     beforeEach(() => {
         jest.clearAllMocks();

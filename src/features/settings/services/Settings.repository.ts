@@ -1,8 +1,8 @@
-import { IAISettingsDataSource, IAISettingsRepository } from '../types';
+import { ISettingsDataSource, ISettingsRepository } from '../types';
 
-export const createAISettingsRepository = (
-    settingsDataSource: IAISettingsDataSource,
-): IAISettingsRepository => ({
+export const createSettingsRepository = (
+    settingsDataSource: ISettingsDataSource,
+): ISettingsRepository => ({
     getApiKey(): string | null {
         return settingsDataSource.getApiKey();
     },

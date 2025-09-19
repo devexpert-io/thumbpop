@@ -1,13 +1,14 @@
-import { IAIRepository, IAISettingsRepository } from '../../features/ai/types';
+import { IAIRepository } from '../../features/ai/types';
 import { createEnhanceThumbnailUseCase } from '../../features/ai/use-cases/EnhanceThumbnail.usecase';
 import { geminiAIDataSource } from '../../features/ai/services/data-sources/Gemini.datasource';
 import { createAIRepository } from '../../features/ai/services/AI.repository';
-import { createLocalStorageAISettingsDataSource } from '../../features/ai/services/data-sources/LocalStorageSettings.datasource';
-import { createAISettingsRepository } from '../../features/ai/services/AISettings.repository';
-import { createGetStoredApiKeyUseCase } from '../../features/ai/use-cases/GetStoredApiKey.usecase';
-import { createSaveApiKeyUseCase } from '../../features/ai/use-cases/SaveApiKey.usecase';
-import { createGetVideoContextUseCase } from '../../features/ai/use-cases/GetVideoContext.usecase';
-import { createSaveVideoContextUseCase } from '../../features/ai/use-cases/SaveVideoContext.usecase';
+import { ISettingsRepository } from '../../features/settings/types';
+import { createLocalStorageSettingsDataSource } from '../../features/settings/services/data-sources/LocalStorageSettings.datasource';
+import { createSettingsRepository } from '../../features/settings/services/Settings.repository';
+import { createGetStoredApiKeyUseCase } from '../../features/settings/use-cases/GetStoredApiKey.usecase';
+import { createSaveApiKeyUseCase } from '../../features/settings/use-cases/SaveApiKey.usecase';
+import { createGetVideoContextUseCase } from '../../features/settings/use-cases/GetVideoContext.usecase';
+import { createSaveVideoContextUseCase } from '../../features/settings/use-cases/SaveVideoContext.usecase';
 import { createCanvasStateLocalStorageDataSource } from '../../features/editor/services/data-sources/CanvasStateLocalStorage.datasource';
 import { createTextPropertiesLocalStorageDataSource } from '../../features/editor/services/data-sources/TextPropertiesLocalStorage.datasource';
 import { createBackgroundRemovalDataSource } from '../../features/editor/services/data-sources/BackgroundRemoval.datasource';
@@ -29,12 +30,12 @@ import { createSaveTextPropertiesUseCase } from '../../features/editor/use-cases
 const aiRepository = createAIRepository(geminiAIDataSource);
 const enhanceThumbnailUseCase = createEnhanceThumbnailUseCase(aiRepository);
 
-const aiSettingsDataSource = createLocalStorageAISettingsDataSource();
-const aiSettingsRepository = createAISettingsRepository(aiSettingsDataSource);
-const getStoredApiKeyUseCase = createGetStoredApiKeyUseCase(aiSettingsRepository);
-const saveApiKeyUseCase = createSaveApiKeyUseCase(aiSettingsRepository);
-const getVideoContextUseCase = createGetVideoContextUseCase(aiSettingsRepository);
-const saveVideoContextUseCase = createSaveVideoContextUseCase(aiSettingsRepository);
+const settingsDataSource = createLocalStorageSettingsDataSource();
+const settingsRepository = createSettingsRepository(settingsDataSource);
+const getStoredApiKeyUseCase = createGetStoredApiKeyUseCase(settingsRepository);
+const saveApiKeyUseCase = createSaveApiKeyUseCase(settingsRepository);
+const getVideoContextUseCase = createGetVideoContextUseCase(settingsRepository);
+const saveVideoContextUseCase = createSaveVideoContextUseCase(settingsRepository);
 
 const canvasStateDataSource = createCanvasStateLocalStorageDataSource();
 const textPropertiesDataSource = createTextPropertiesLocalStorageDataSource();
@@ -63,7 +64,7 @@ const saveTextPropertiesUseCase = createSaveTextPropertiesUseCase(editorReposito
 export interface DIContainer {
     enhanceThumbnailUseCase: typeof enhanceThumbnailUseCase;
     aiRepository: IAIRepository;
-    aiSettingsRepository: IAISettingsRepository;
+    settingsRepository: ISettingsRepository;
     getStoredApiKeyUseCase: typeof getStoredApiKeyUseCase;
     saveApiKeyUseCase: typeof saveApiKeyUseCase;
     getVideoContextUseCase: typeof getVideoContextUseCase;
@@ -85,7 +86,7 @@ export interface DIContainer {
 export const diContainer: DIContainer = {
     enhanceThumbnailUseCase,
     aiRepository,
-    aiSettingsRepository,
+    settingsRepository,
     getStoredApiKeyUseCase,
     saveApiKeyUseCase,
     getVideoContextUseCase,
