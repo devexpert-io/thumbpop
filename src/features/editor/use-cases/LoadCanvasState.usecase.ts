@@ -1,6 +1,9 @@
 import { Canvas } from 'fabric';
 import { IEditorRepository } from '../types';
 
+const isCanvasSerializable = (value: unknown): value is string | Record<string, unknown> =>
+    typeof value === 'string' || (typeof value === 'object' && value !== null);
+
 export const createLoadCanvasStateUseCase = (editorRepository: IEditorRepository) => ({
     async execute(canvas: Canvas): Promise<boolean> {
         const canvasElement = canvas.getElement();
@@ -16,6 +19,11 @@ export const createLoadCanvasStateUseCase = (editorRepository: IEditorRepository
 
         const storedState = await editorRepository.loadCanvasState();
         if (!storedState) {
+            return false;
+        }
+
+        if (!isCanvasSerializable(storedState.objects)) {
+            console.warn('Stored canvas state is invalid, skipping load');
             return false;
         }
 
