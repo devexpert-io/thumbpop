@@ -1,11 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { CSSProperties } from 'react';
 import { Canvas, FabricObject, FabricImage } from 'fabric';
 import { useServices } from '../../../core/di/ServicesContext';
 
+export interface BackgroundRemovalOverlayPosition {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+}
+
 interface UseEditorProps {
     showToast: (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => void;
-    onBackgroundRemovalStart?: (style: CSSProperties) => void;
+    onBackgroundRemovalStart?: (overlay: BackgroundRemovalOverlayPosition) => void;
     onBackgroundRemovalEnd?: () => void;
 }
 
@@ -232,29 +238,32 @@ export function useEditor({ showToast, onBackgroundRemovalStart, onBackgroundRem
                 const zoom = canvasRef.current.getZoom();
                 const boundingRect = image.getBoundingRect();
                 const canvasBoundingRect = canvasElement.getBoundingClientRect();
-                const style: CSSProperties = {
-                    position: 'fixed',
+                const overlay: BackgroundRemovalOverlayPosition = {
                     top: canvasBoundingRect.top + boundingRect.top * zoom,
                     left: canvasBoundingRect.left + boundingRect.left * zoom,
                     width: boundingRect.width * zoom,
                     height: boundingRect.height * zoom,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    zIndex: 100,
                 };
-                onBackgroundRemovalStart(style);
+                onBackgroundRemovalStart(overlay);
             }
 
             const processedImageUrl = await removeBackgroundUseCase.execute(imageUrl);
             const newImg = await FabricImage.fromURL(processedImageUrl);
+            const originX = image.originX ?? 'center';
+            const originY = image.originY ?? 'center';
             newImg.set({
-                left: image.left,
-                top: image.top,
-                scaleX: image.scaleX,
-                scaleY: image.scaleY,
-                angle: image.angle,
+                left: image.left ?? 0,
+                top: image.top ?? 0,
+                originX,
+                originY,
+                scaleX: image.scaleX ?? 1,
+                scaleY: image.scaleY ?? 1,
+                angle: image.angle ?? 0,
+                flipX: image.flipX ?? false,
+                flipY: image.flipY ?? false,
+                skewX: image.skewX ?? 0,
+                skewY: image.skewY ?? 0,
+                opacity: image.opacity ?? 1,
             });
             canvasRef.current?.remove(image);
             canvasRef.current?.add(newImg);

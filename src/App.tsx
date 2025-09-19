@@ -3,13 +3,13 @@ import { DIProvider } from './core/di/ServicesContext';
 import UnifiedLayout from './components/Layout/UnifiedLayout';
 import ToastContainer, { ToastType } from './components/Toast/ToastContainer';
 import { useAIGeneration } from './features/ai/hooks/useAIGeneration';
-import { useEditor } from './features/editor/hooks/useEditor';
+import { useEditor, BackgroundRemovalOverlayPosition } from './features/editor/hooks/useEditor';
 import { useAIPrompt } from './features/ai/hooks/useAIPrompt';
 
 function AppContent() {
     const [toasts, setToasts] = useState<ToastType[]>([]);
     const [isRemovingBackground, setIsRemovingBackground] = useState(false);
-    const [spinnerStyle, setSpinnerStyle] = useState<React.CSSProperties>({});
+    const [backgroundRemovalOverlay, setBackgroundRemovalOverlay] = useState<BackgroundRemovalOverlayPosition | null>(null);
 
     const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => {
         const id = Date.now().toString();
@@ -47,13 +47,13 @@ function AppContent() {
         getCanvasImage,
     } = useEditor({
         showToast,
-        onBackgroundRemovalStart: (style) => {
-            setSpinnerStyle(style);
+        onBackgroundRemovalStart: (overlay) => {
+            setBackgroundRemovalOverlay(overlay);
             setIsRemovingBackground(true);
         },
         onBackgroundRemovalEnd: () => {
             setIsRemovingBackground(false);
-            setSpinnerStyle({});
+            setBackgroundRemovalOverlay(null);
         },
     });
 
@@ -115,8 +115,17 @@ function AppContent() {
 
     return (
         <>
-            {isRemovingBackground && (
-                <div style={spinnerStyle}>
+            {isRemovingBackground && backgroundRemovalOverlay && (
+                <div
+                    className="fixed flex items-center justify-center bg-black/50"
+                    style={{
+                        top: backgroundRemovalOverlay.top,
+                        left: backgroundRemovalOverlay.left,
+                        width: backgroundRemovalOverlay.width,
+                        height: backgroundRemovalOverlay.height,
+                        zIndex: 200,
+                    }}
+                >
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white" />
                 </div>
             )}
