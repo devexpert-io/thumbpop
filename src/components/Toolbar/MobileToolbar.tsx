@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Undo, Redo, Type, Upload, Download, Copy, Clipboard, Trash2, 
-  Palette, Settings, X, Bold, Italic, Underline, AlignLeft, 
+import {
+  Undo, Redo, Type, Upload, Download, Copy, Clipboard, Trash2,
+  Palette, Settings, X, Bold, Italic, Underline, AlignLeft,
   AlignCenter, AlignRight, RotateCcw
 } from 'lucide-react';
 import { ChromePicker } from 'react-color';
 import { FabricObject, IText } from 'fabric';
-import { saveTextProperties, loadTextProperties } from '../../utils/textPropertiesUtils';
+import { useServices } from '../../core/di/ServicesContext';
 
 interface MobileToolbarProps {
   selectedObject: FabricObject | null;
@@ -62,6 +62,8 @@ const MobileToolbar: React.FC<MobileToolbarProps> = ({
   const [showTextPanel, setShowTextPanel] = useState(false);
   const [showColorPanel, setShowColorPanel] = useState(false);
   const [showMorePanel, setShowMorePanel] = useState(false);
+
+  const { loadTextPropertiesUseCase, saveTextPropertiesUseCase } = useServices();
   
   // Text properties
   const [fontFamily, setFontFamily] = useState('Impact');
@@ -86,13 +88,13 @@ const MobileToolbar: React.FC<MobileToolbarProps> = ({
 
   // Load saved text properties
   useEffect(() => {
-    const savedProperties = loadTextProperties();
+    const savedProperties = loadTextPropertiesUseCase.execute();
     setFontFamily(savedProperties.fontFamily);
     setFontSize(savedProperties.fontSize);
     setTextColor(savedProperties.fill);
     setStrokeColor(savedProperties.stroke);
     setStrokeWidth(savedProperties.strokeWidth);
-  }, []);
+  }, [loadTextPropertiesUseCase]);
 
   // Update text properties when selection changes
   useEffect(() => {
@@ -122,7 +124,7 @@ const MobileToolbar: React.FC<MobileToolbarProps> = ({
     if (!selectedObject || selectedObject.type !== 'i-text') return;
     
     const updates: any = { [property]: value };
-    saveTextProperties({ [property]: value });
+    saveTextPropertiesUseCase.execute({ [property]: value });
     
     switch (property) {
       case 'fontFamily':

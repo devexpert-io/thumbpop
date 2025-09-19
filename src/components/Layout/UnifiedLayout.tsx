@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ThumbnailCanvas from '../Canvas/ThumbnailCanvas';
 import EnhancedToolbar from '../Toolbar/EnhancedToolbar';
 import { FabricObject } from 'fabric';
@@ -9,6 +9,8 @@ interface UnifiedLayoutProps {
     selectedObject: FabricObject | null;
     backgroundColor: string;
     isLoadingAI: boolean;
+    videoContext: string;
+    onVideoContextChange: (value: string) => void;
     onBackgroundColorChange: (color: string) => void;
     onAddText: () => void;
     onUpdateText: (options: any) => void;
@@ -31,45 +33,35 @@ interface UnifiedLayoutProps {
 }
 
 const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
-                                                         canvasRef,
-                                                         selectedObject,
-                                                         backgroundColor,
-                                                         isLoadingAI,
-                                                         onBackgroundColorChange,
-                                                         onAddText,
-                                                         onUpdateText,
-                                                         onImageUpload,
-                                                         onRemoveBackground,
-                                                         onDeleteObject,
-                                                         onCopyObject,
-                                                         onPasteObject,
-                                                         canPaste,
-                                                         onClearCanvas,
-                                                         onAIGenerate,
-                                                         onLuckyGenerate,
-                                                         onEditApiKey,
-                                                         onDownload,
-                                                         onUndo,
-                                                         onRedo,
-                                                         canUndo,
-                                                         canRedo,
-                                                         showToast,
-                                                     }) => {
-    const [videoContext, setVideoContext] = useState('');
+    canvasRef,
+    selectedObject,
+    backgroundColor,
+    isLoadingAI,
+    onBackgroundColorChange,
+    onAddText,
+    onUpdateText,
+    onImageUpload,
+    onRemoveBackground,
+    onDeleteObject,
+    onCopyObject,
+    onPasteObject,
+    canPaste,
+    onClearCanvas,
+    onAIGenerate,
+    onLuckyGenerate,
+    onEditApiKey,
+    onDownload,
+    onUndo,
+    onRedo,
+    canUndo,
+    canRedo,
+    showToast,
+    videoContext,
+    onVideoContextChange,
+}) => {
     const [userPrompt, setUserPrompt] = useState('');
     const [showVideoContext, setShowVideoContext] = useState(true);
     const [showInstructions, setShowInstructions] = useState(false);
-
-    useEffect(() => {
-        const saved = localStorage.getItem('thumbpop_videoContext');
-        if (saved) setVideoContext(saved);
-    }, []);
-
-    useEffect(() => {
-        if (videoContext) {
-            localStorage.setItem('thumbpop_videoContext', videoContext);
-        }
-    }, [videoContext]);
 
     const handleGenerate = () => {
         if (!videoContext.trim()) {
@@ -181,7 +173,7 @@ const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                         <div className="pb-3">
               <textarea
                   value={videoContext}
-                  onChange={(e) => setVideoContext(e.target.value)}
+                  onChange={(e) => onVideoContextChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-sm"
                   rows={2}
                   placeholder="Describe your video content (e.g., A cooking tutorial on how to make the perfect chocolate cake)"

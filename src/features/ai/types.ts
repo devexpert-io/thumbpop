@@ -46,3 +46,17 @@ export interface IAIRepository {
      */
     isInitialized(): boolean;
 }
+
+export interface IAISettingsDataSource {
+    getApiKey(): string | null;
+    saveApiKey(apiKey: string): void;
+    getVideoContext(): string | null;
+    saveVideoContext(videoContext: string): void;
+}
+
+export interface IAISettingsRepository {
+    getApiKey(): string | null;
+    saveApiKey(apiKey: string): void;
+    getVideoContext(): string | null;
+    saveVideoContext(videoContext: string): void;
+}

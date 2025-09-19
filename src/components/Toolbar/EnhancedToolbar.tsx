@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Copy, Clipboard, Trash2, RotateCcw, Undo, Redo, Type, Upload, 
+import {
+  Copy, Clipboard, Trash2, RotateCcw, Undo, Redo, Type, Upload,
   Palette, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
   Image, Wand2, Download
 } from 'lucide-react';
 import { ChromePicker } from 'react-color';
 import { FabricObject, IText } from 'fabric';
-import { saveTextProperties, loadTextProperties } from '../../utils/textPropertiesUtils';
+import { useServices } from '../../core/di/ServicesContext';
 import AdvancedMobileToolbar from './AdvancedMobileToolbar';
 
 interface EnhancedToolbarProps {
@@ -70,6 +70,8 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
   const textPickerRef = useRef<HTMLDivElement>(null);
   const strokePickerRef = useRef<HTMLDivElement>(null);
 
+  const { loadTextPropertiesUseCase, saveTextPropertiesUseCase } = useServices();
+
   // Text properties from selected object
   const [textContent, setTextContent] = useState('');
   const [fontFamily, setFontFamily] = useState('Impact');
@@ -87,13 +89,13 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
 
   // Load saved text properties on mount
   useEffect(() => {
-    const savedProperties = loadTextProperties();
+    const savedProperties = loadTextPropertiesUseCase.execute();
     setFontFamily(savedProperties.fontFamily);
     setFontSize(savedProperties.fontSize);
     setTextColor(savedProperties.fill);
     setStrokeColor(savedProperties.stroke);
     setStrokeWidth(savedProperties.strokeWidth);
-  }, []);
+  }, [loadTextPropertiesUseCase]);
 
   // Update text properties when selection changes
   useEffect(() => {
@@ -155,8 +157,7 @@ const EnhancedToolbar: React.FC<EnhancedToolbarProps> = ({
     
     const updates: any = { [property]: value };
     
-    // Save to persistent storage
-    saveTextProperties({ [property]: value });
+    saveTextPropertiesUseCase.execute({ [property]: value });
     
     // Update local state for all properties
     switch (property) {

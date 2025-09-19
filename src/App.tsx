@@ -1,10 +1,10 @@
-import React, {useEffect, useState} from 'react';
-import {DIProvider} from './core/di/ServicesContext';
+import React, { useEffect, useState } from 'react';
+import { DIProvider } from './core/di/ServicesContext';
 import UnifiedLayout from './components/Layout/UnifiedLayout';
-import ToastContainer, {ToastType} from './components/Toast/ToastContainer';
-import {useAIGeneration} from './features/ai/hooks/useAIGeneration';
-import {useEditor} from './features/editor/hooks/useEditor';
-import {canvasToBase64} from './utils/canvasUtils';
+import ToastContainer, { ToastType } from './components/Toast/ToastContainer';
+import { useAIGeneration } from './features/ai/hooks/useAIGeneration';
+import { useEditor } from './features/editor/hooks/useEditor';
+import { useAIPrompt } from './features/ai/hooks/useAIPrompt';
 
 function AppContent() {
     const [toasts, setToasts] = useState<ToastType[]>([]);
@@ -36,36 +36,39 @@ function AppContent() {
         showClearDialog,
         confirmClearCanvas,
         cancelClearCanvas,
-        showApiKeyModal,
-        handleApiKeySubmit,
-        setShowApiKeyModal,
         handleReplaceCanvasImage,
         handleUndo,
         handleRedo,
         canUndo,
         canRedo,
         saveToHistory,
+        getCanvasImage,
     } = useEditor({ showToast });
+
+    const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
     const {
         isLoading: isAILoading,
         enhance,
         initialize: initializeAI,
+        initializeFromStorage,
     } = useAIGeneration();
 
+    const { videoContext, setVideoContext: updateVideoContext } = useAIPrompt();
+
     useEffect(() => {
-        const savedKey = localStorage.getItem('gemini_api_key');
-        if (savedKey) {
-            initializeAI(savedKey);
+        const hasKey = initializeFromStorage();
+        if (!hasKey) {
+            setShowApiKeyModal(true);
         }
-    }, [initializeAI]);
+    }, [initializeFromStorage]);
 
     const handleAIGenerate = async (videoContext: string, prompt: string) => {
-        if (!canvasRef.current) return;
+        const canvasImage = getCanvasImage();
+        if (!canvasImage) return;
         try {
-            const canvasImage = canvasToBase64(canvasRef.current);
             const enhancedImage = await enhance({ canvasImage, videoContext, userPrompt: prompt });
-            handleReplaceCanvasImage(enhancedImage);
+            await handleReplaceCanvasImage(enhancedImage);
             saveToHistory();
             showToast('AI enhancement applied!', 'success');
         } catch (error: any) {
@@ -77,11 +80,11 @@ function AppContent() {
     };
 
     const handleLuckyGenerate = async (videoContext: string) => {
-        if (!canvasRef.current) return;
+        const canvasImage = getCanvasImage();
+        if (!canvasImage) return;
         try {
-            const canvasImage = canvasToBase64(canvasRef.current);
             const enhancedImage = await enhance({ canvasImage, videoContext, isLucky: true });
-            handleReplaceCanvasImage(enhancedImage);
+            await handleReplaceCanvasImage(enhancedImage);
             saveToHistory();
             showToast('Lucky enhancement applied!', 'success');
         } catch (error: any) {
@@ -90,6 +93,12 @@ function AppContent() {
                 setShowApiKeyModal(true);
             }
         }
+    };
+
+    const handleApiKeySubmit = (key: string) => {
+        if (!key) return;
+        initializeAI(key);
+        setShowApiKeyModal(false);
     };
 
     return (
@@ -118,6 +127,8 @@ function AppContent() {
                 canRedo={canRedo}
                 showToast={showToast}
                 isLoadingAI={isAILoading}
+                videoContext={videoContext}
+                onVideoContextChange={updateVideoContext}
             />
 
             <ToastContainer toasts={toasts} removeToast={removeToast} />

@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Undo, Redo, Type, Upload, Download, Copy, Clipboard, Trash2, 
+import {
+  Undo, Redo, Type, Upload, Download, Copy, Clipboard, Trash2,
   Palette, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
   RotateCcw, Settings, ChevronDown, Wand2, Square, Circle
 } from 'lucide-react';
 import { ChromePicker } from 'react-color';
 import { FabricObject, IText } from 'fabric';
-import { saveTextProperties, loadTextProperties } from '../../utils/textPropertiesUtils';
+import { useServices } from '../../core/di/ServicesContext';
 
 interface AdvancedMobileToolbarProps {
   selectedObject: FabricObject | null;
@@ -65,6 +65,8 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
   const [colorPickerType, setColorPickerType] = useState<'background' | 'text' | 'stroke'>('background');
   const [showAdvanced, setShowAdvanced] = useState(false);
   
+  const { loadTextPropertiesUseCase, saveTextPropertiesUseCase } = useServices();
+
   // Text properties
   const [fontFamily, setFontFamily] = useState('Impact');
   const [fontSize, setFontSize] = useState(48);
@@ -81,13 +83,13 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
 
   // Load saved text properties
   useEffect(() => {
-    const savedProperties = loadTextProperties();
+    const savedProperties = loadTextPropertiesUseCase.execute();
     setFontFamily(savedProperties.fontFamily);
     setFontSize(savedProperties.fontSize);
     setTextColor(savedProperties.fill);
     setStrokeColor(savedProperties.stroke);
     setStrokeWidth(savedProperties.strokeWidth);
-  }, []);
+  }, [loadTextPropertiesUseCase]);
 
   // Update text properties when selection changes
   useEffect(() => {
@@ -117,7 +119,7 @@ const AdvancedMobileToolbar: React.FC<AdvancedMobileToolbarProps> = ({
     if (!selectedObject || selectedObject.type !== 'i-text') return;
     
     const updates: any = { [property]: value };
-    saveTextProperties({ [property]: value });
+    saveTextPropertiesUseCase.execute({ [property]: value });
     
     switch (property) {
       case 'fontFamily':

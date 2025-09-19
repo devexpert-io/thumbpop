@@ -1,30 +1,31 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Canvas, FabricObject, FabricImage } from 'fabric';
-import {
-    downloadCanvas,
-    addTextToCanvas,
-    addImageToCanvas,
-    saveCanvasState,
-    loadCanvasState,
-    clearCanvasState,
-    replaceCanvasWithImage,
-} from '../../../utils/canvasUtils';
-import backgroundRemovalService from '../../../services/backgroundRemoval';
+import { useServices } from '../../../core/di/ServicesContext';
 
 interface UseEditorProps {
     showToast: (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => void;
 }
 
 export function useEditor({ showToast }: UseEditorProps) {
+    const {
+        addTextUseCase,
+        addImageUseCase,
+        replaceCanvasImageUseCase,
+        downloadCanvasUseCase,
+        saveCanvasStateUseCase,
+        loadCanvasStateUseCase,
+        clearCanvasStateUseCase,
+        removeBackgroundUseCase,
+        canvasToBase64UseCase,
+    } = useServices();
+
     const canvasRef = useRef<Canvas | null>(null);
     const [selectedObject, setSelectedObject] = useState<FabricObject | null>(null);
     const [backgroundColor, setBackgroundColor] = useState('#ffffff');
     const [copiedObject, setCopiedObject] = useState<FabricObject | null>(null);
     const [showClearDialog, setShowClearDialog] = useState(false);
-    const [showApiKeyModal, setShowApiKeyModal] = useState(false);
     const hasPastedInternalRef = useRef(false);
 
-    // --- History State ---
     const [canUndo, setCanUndo] = useState(false);
     const [canRedo, setCanRedo] = useState(false);
     const historyRef = useRef<string[]>([]);
@@ -47,12 +48,10 @@ export function useEditor({ showToast }: UseEditorProps) {
         };
         const currentState = JSON.stringify(canvasState);
 
-        // Don't save duplicate states
         if (historyRef.current[historyIndexRef.current] === currentState) {
             return;
         }
 
-        // Remove any future history if we're in the middle of the stack
         if (historyIndexRef.current < historyRef.current.length - 1) {
             historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
         }
@@ -60,7 +59,6 @@ export function useEditor({ showToast }: UseEditorProps) {
         historyRef.current.push(currentState);
         historyIndexRef.current++;
 
-        // Limit history size
         if (historyRef.current.length > 50) {
             historyRef.current.shift();
             historyIndexRef.current--;
@@ -72,32 +70,33 @@ export function useEditor({ showToast }: UseEditorProps) {
     const debouncedSave = useCallback(() => {
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         saveTimeoutRef.current = setTimeout(() => {
-            if (canvasRef.current) saveCanvasState(canvasRef.current);
+            if (canvasRef.current) {
+                void saveCanvasStateUseCase.execute(canvasRef.current);
+            }
         }, 1000);
-    }, []);
+    }, [saveCanvasStateUseCase]);
 
     const handleUndo = useCallback(async () => {
         if (!canvasRef.current || historyIndexRef.current <= 0) return;
-        
+
         isRestoringRef.current = true;
         historyIndexRef.current--;
-        
+
         try {
             const prevState = JSON.parse(historyRef.current[historyIndexRef.current]);
             await canvasRef.current.loadFromJSON(prevState.objects);
-            
+
             if (canvasRef.current) {
                 canvasRef.current.backgroundColor = prevState.backgroundColor;
                 setBackgroundColor(prevState.backgroundColor as string);
                 canvasRef.current.renderAll();
             }
-            
+
             isRestoringRef.current = false;
             updateUndoRedoState();
         } catch (error) {
             console.error('Error during undo:', error);
             isRestoringRef.current = false;
-            // Revert index change if parsing failed
             historyIndexRef.current++;
             updateUndoRedoState();
         }
@@ -105,26 +104,25 @@ export function useEditor({ showToast }: UseEditorProps) {
 
     const handleRedo = useCallback(async () => {
         if (!canvasRef.current || historyIndexRef.current >= historyRef.current.length - 1) return;
-        
+
         isRestoringRef.current = true;
         historyIndexRef.current++;
-        
+
         try {
             const nextState = JSON.parse(historyRef.current[historyIndexRef.current]);
             await canvasRef.current.loadFromJSON(nextState.objects);
-            
+
             if (canvasRef.current) {
                 canvasRef.current.backgroundColor = nextState.backgroundColor;
                 setBackgroundColor(nextState.backgroundColor as string);
                 canvasRef.current.renderAll();
             }
-            
+
             isRestoringRef.current = false;
             updateUndoRedoState();
         } catch (error) {
             console.error('Error during redo:', error);
             isRestoringRef.current = false;
-            // Revert index change if parsing failed
             historyIndexRef.current--;
             updateUndoRedoState();
         }
@@ -144,7 +142,6 @@ export function useEditor({ showToast }: UseEditorProps) {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        // Initialize history with canvas state
         const initializeHistory = () => {
             const canvasJSON = canvas.toJSON();
             const initialState = {
@@ -156,27 +153,28 @@ export function useEditor({ showToast }: UseEditorProps) {
             updateUndoRedoState();
         };
 
-        loadCanvasState(canvas)
+        loadCanvasStateUseCase
+            .execute(canvas)
             .then((loaded) => {
                 if (loaded && canvas.backgroundColor) {
                     setBackgroundColor(canvas.backgroundColor as string);
                 }
-                // Always initialize history after loading attempt
                 setTimeout(initializeHistory, 50);
             })
             .catch(() => {
-                // If loading fails, still initialize history
                 setTimeout(initializeHistory, 50);
             });
 
-        const historyHandler = () => { 
-            // Add small delay to ensure the canvas state has been updated
+        const historyHandler = () => {
             setTimeout(() => {
-                saveToHistory(); 
-                debouncedSave(); 
+                saveToHistory();
+                debouncedSave();
             }, 10);
         };
-        const selectionHandler = (e: any) => { setSelectedObject(e.selected?.[0] || null); };
+
+        const selectionHandler = (e: any) => {
+            setSelectedObject(e.selected?.[0] || null);
+        };
 
         canvas.on('selection:created', selectionHandler);
         canvas.on('selection:updated', selectionHandler);
@@ -196,39 +194,194 @@ export function useEditor({ showToast }: UseEditorProps) {
             canvas.off('path:created', historyHandler);
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         };
-    }, [saveToHistory, debouncedSave, updateUndoRedoState]);
+    }, [saveToHistory, debouncedSave, updateUndoRedoState, loadCanvasStateUseCase]);
 
-    const handleAddText = () => { if (canvasRef.current) addTextToCanvas(canvasRef.current); };
-    const handleUpdateText = (options: any) => { if (selectedObject) { selectedObject.set(options); canvasRef.current?.renderAll(); } };
-    const handleImageUpload = (file: File) => { if (!canvasRef.current) return; const reader = new FileReader(); reader.onload = (e) => { const imageUrl = e.target?.result as string; addImageToCanvas(canvasRef.current!, imageUrl); }; reader.readAsDataURL(file); };
-    const handleRemoveBackground = async () => { if (!canvasRef.current || !selectedObject || (selectedObject.type !== 'image' && (selectedObject as any).type !== 'Image')) return; const image = selectedObject as FabricImage; const imageUrl = image.getSrc(); try { const processedImageUrl = await backgroundRemovalService.removeBackground(imageUrl); const newImg = await FabricImage.fromURL(processedImageUrl); newImg.set({ left: image.left, top: image.top, scaleX: image.scaleX, scaleY: image.scaleY, angle: image.angle, }); canvasRef.current?.remove(image); canvasRef.current?.add(newImg); canvasRef.current?.setActiveObject(newImg); canvasRef.current?.renderAll(); setSelectedObject(newImg); } catch (error: any) { showToast(`Failed to remove background: ${error.message}`, 'error'); } };
-    const handleDeleteObject = useCallback(() => { if (selectedObject && canvasRef.current) { canvasRef.current.remove(selectedObject); canvasRef.current.discardActiveObject(); setSelectedObject(null); } }, [selectedObject]);
-    const handleCopyObject = useCallback(async () => { if (!selectedObject) return; const clonedObject = await selectedObject.clone(); setCopiedObject(clonedObject); hasPastedInternalRef.current = false; }, [selectedObject]);
-    const handlePasteObject = () => { if (!copiedObject || !canvasRef.current) return; copiedObject.clone().then((cloned: FabricObject) => { cloned.set({ left: (cloned.left ?? 0) + 10, top: (cloned.top ?? 0) + 10, }); canvasRef.current?.add(cloned); canvasRef.current?.setActiveObject(cloned); canvasRef.current?.renderAll(); }); };
-    const handlePasteFromClipboard = async () => { if (!canvasRef.current) return false; try { const clipboardItems = await navigator.clipboard.read(); for (const clipboardItem of clipboardItems) { for (const type of clipboardItem.types) { if (type.startsWith('image/')) { const blob = await clipboardItem.getType(type); const reader = new FileReader(); reader.onload = () => addImageToCanvas(canvasRef.current!, reader.result as string); reader.readAsDataURL(blob); return true; } } if (clipboardItem.types.includes('text/plain')) { const blob = await clipboardItem.getType('text/plain'); const text = await blob.text(); if (text) { addTextToCanvas(canvasRef.current, text); return true; } } } } catch (err) { console.warn('Failed to read clipboard contents: ', err); } return false; };
-    const handleSmartPaste = useCallback(async () => { if (copiedObject && !hasPastedInternalRef.current) { handlePasteObject(); hasPastedInternalRef.current = true; return; } const clipboardSuccess = await handlePasteFromClipboard(); if (clipboardSuccess) { hasPastedInternalRef.current = false; } if (!clipboardSuccess && !copiedObject) { hasPastedInternalRef.current = false; } }, [copiedObject]);
-    useEffect(() => { const handleKeyDown = (e: KeyboardEvent) => { if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return; if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); } if ((e.ctrlKey || e.metaKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) { e.preventDefault(); handleRedo(); } if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); handleDeleteObject(); } if ((e.ctrlKey || e.metaKey) && e.key === 'c') { e.preventDefault(); handleCopyObject(); } if ((e.ctrlKey || e.metaKey) && e.key === 'v') { e.preventDefault(); handleSmartPaste(); } }; document.addEventListener('keydown', handleKeyDown); return () => document.removeEventListener('keydown', handleKeyDown); }, [handleDeleteObject, handleCopyObject, handleSmartPaste, handleUndo, handleRedo]);
+    const handleAddText = () => {
+        if (canvasRef.current) {
+            addTextUseCase.execute(canvasRef.current);
+        }
+    };
+
+    const handleUpdateText = (options: any) => {
+        if (selectedObject) {
+            selectedObject.set(options);
+            canvasRef.current?.renderAll();
+        }
+    };
+
+    const handleImageUpload = (file: File) => {
+        if (!canvasRef.current) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imageUrl = e.target?.result as string;
+            void addImageUseCase.execute(canvasRef.current!, imageUrl);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveBackground = async () => {
+        if (!canvasRef.current || !selectedObject || (selectedObject.type !== 'image' && (selectedObject as any).type !== 'Image')) return;
+        const image = selectedObject as FabricImage;
+        const imageUrl = image.getSrc();
+        try {
+            const processedImageUrl = await removeBackgroundUseCase.execute(imageUrl);
+            const newImg = await FabricImage.fromURL(processedImageUrl);
+            newImg.set({
+                left: image.left,
+                top: image.top,
+                scaleX: image.scaleX,
+                scaleY: image.scaleY,
+                angle: image.angle,
+            });
+            canvasRef.current?.remove(image);
+            canvasRef.current?.add(newImg);
+            canvasRef.current?.setActiveObject(newImg);
+            canvasRef.current?.renderAll();
+            setSelectedObject(newImg);
+        } catch (error: any) {
+            showToast(`Failed to remove background: ${error.message}`, 'error');
+        }
+    };
+
+    const handleDeleteObject = useCallback(() => {
+        if (selectedObject && canvasRef.current) {
+            canvasRef.current.remove(selectedObject);
+            canvasRef.current.discardActiveObject();
+            setSelectedObject(null);
+        }
+    }, [selectedObject]);
+
+    const handleCopyObject = useCallback(async () => {
+        if (!selectedObject) return;
+        const clonedObject = await selectedObject.clone();
+        setCopiedObject(clonedObject);
+        hasPastedInternalRef.current = false;
+    }, [selectedObject]);
+
+    const handlePasteObject = () => {
+        if (!copiedObject || !canvasRef.current) return;
+        copiedObject.clone().then((cloned: FabricObject) => {
+            cloned.set({
+                left: (cloned.left ?? 0) + 10,
+                top: (cloned.top ?? 0) + 10,
+            });
+            canvasRef.current?.add(cloned);
+            canvasRef.current?.setActiveObject(cloned);
+            canvasRef.current?.renderAll();
+        });
+    };
+
+    const handlePasteFromClipboard = async () => {
+        if (!canvasRef.current) return false;
+        try {
+            const clipboardItems = await navigator.clipboard.read();
+            for (const clipboardItem of clipboardItems) {
+                for (const type of clipboardItem.types) {
+                    if (type.startsWith('image/')) {
+                        const blob = await clipboardItem.getType(type);
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            void addImageUseCase.execute(canvasRef.current!, reader.result as string);
+                        };
+                        reader.readAsDataURL(blob);
+                        return true;
+                    }
+                }
+                if (clipboardItem.types.includes('text/plain')) {
+                    const blob = await clipboardItem.getType('text/plain');
+                    const text = await blob.text();
+                    if (text) {
+                        addTextUseCase.execute(canvasRef.current, { text });
+                        return true;
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn('Failed to read clipboard contents: ', err);
+        }
+        return false;
+    };
+
+    const handleSmartPaste = useCallback(async () => {
+        if (copiedObject && !hasPastedInternalRef.current) {
+            handlePasteObject();
+            hasPastedInternalRef.current = true;
+            return;
+        }
+        const clipboardSuccess = await handlePasteFromClipboard();
+        if (clipboardSuccess) {
+            hasPastedInternalRef.current = false;
+        }
+        if (!clipboardSuccess && !copiedObject) {
+            hasPastedInternalRef.current = false;
+        }
+    }, [copiedObject]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                handleUndo();
+            }
+            if ((e.ctrlKey || e.metaKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
+                e.preventDefault();
+                handleRedo();
+            }
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                e.preventDefault();
+                handleDeleteObject();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                e.preventDefault();
+                handleCopyObject();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                e.preventDefault();
+                handleSmartPaste();
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [handleDeleteObject, handleCopyObject, handleSmartPaste, handleUndo, handleRedo]);
+
     const handleClearCanvas = () => setShowClearDialog(true);
     const cancelClearCanvas = () => setShowClearDialog(false);
-    const confirmClearCanvas = useCallback(() => { 
-        if (!canvasRef.current) return; 
-        const canvas = canvasRef.current; 
-        const bgColor = canvas.backgroundColor; 
-        const objects = canvas.getObjects(); 
-        objects.forEach(obj => canvas.remove(obj)); 
-        canvas.discardActiveObject(); 
-        canvas.backgroundColor = bgColor; 
-        canvas.renderAll(); 
-        setSelectedObject(null); 
-        setShowClearDialog(false); 
-        // Clear localStorage as well
-        clearCanvasState();
-        // The history will be saved automatically by the object:removed events
+
+    const confirmClearCanvas = useCallback(() => {
+        if (!canvasRef.current) return;
+        const canvas = canvasRef.current;
+        const bgColor = canvas.backgroundColor;
+        const objects = canvas.getObjects();
+        objects.forEach(obj => canvas.remove(obj));
+        canvas.discardActiveObject();
+        canvas.backgroundColor = bgColor;
+        canvas.renderAll();
+        setSelectedObject(null);
+        setShowClearDialog(false);
+        void clearCanvasStateUseCase.execute();
         debouncedSave();
-    }, [debouncedSave]);
-    const handleDownload = () => { if (canvasRef.current) downloadCanvas(canvasRef.current); };
-    const handleApiKeySubmit = (key: string) => { localStorage.setItem('gemini_api_key', key); setShowApiKeyModal(false); };
-    const handleReplaceCanvasImage = (imageUrl: string) => { if (canvasRef.current) { replaceCanvasWithImage(canvasRef.current, imageUrl); } };
+    }, [debouncedSave, clearCanvasStateUseCase]);
+
+    const handleDownload = () => {
+        if (canvasRef.current) {
+            downloadCanvasUseCase.execute(canvasRef.current);
+        }
+    };
+
+    const handleReplaceCanvasImage = async (imageUrl: string) => {
+        if (!canvasRef.current) {
+            return;
+        }
+        await replaceCanvasImageUseCase.execute(canvasRef.current, imageUrl);
+    };
+
+    const getCanvasImage = () => {
+        if (!canvasRef.current) {
+            return null;
+        }
+        return canvasToBase64UseCase.execute(canvasRef.current);
+    };
 
     return {
         canvasRef,
@@ -248,14 +401,12 @@ export function useEditor({ showToast }: UseEditorProps) {
         showClearDialog,
         confirmClearCanvas,
         cancelClearCanvas,
-        showApiKeyModal,
-        setShowApiKeyModal,
-        handleApiKeySubmit,
         handleReplaceCanvasImage,
         handleUndo,
         handleRedo,
         canUndo,
         canRedo,
         saveToHistory,
+        getCanvasImage,
     };
 }

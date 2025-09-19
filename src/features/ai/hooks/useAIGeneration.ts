@@ -3,16 +3,31 @@ import { GenerateImageParams } from '../types';
 import { useServices } from '../../../core/di/ServicesContext';
 
 export function useAIGeneration() {
-    const { aiRepository, enhanceThumbnailUseCase } = useServices();
+    const {
+        aiRepository,
+        enhanceThumbnailUseCase,
+        getStoredApiKeyUseCase,
+        saveApiKeyUseCase,
+    } = useServices();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
     const initialize = useCallback(
         (apiKey: string) => {
+            saveApiKeyUseCase.execute(apiKey);
             aiRepository.initialize(apiKey);
         },
-        [aiRepository]
+        [aiRepository, saveApiKeyUseCase]
     );
+
+    const initializeFromStorage = useCallback((): boolean => {
+        const storedKey = getStoredApiKeyUseCase.execute();
+        if (!storedKey) {
+            return false;
+        }
+        aiRepository.initialize(storedKey);
+        return true;
+    }, [aiRepository, getStoredApiKeyUseCase]);
 
     const enhance = useCallback(
         async (params: GenerateImageParams): Promise<string> => {
@@ -36,5 +51,6 @@ export function useAIGeneration() {
         error,
         enhance,
         initialize,
+        initializeFromStorage,
     };
 }
